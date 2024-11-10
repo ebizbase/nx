@@ -63,6 +63,7 @@ jobs:
       - name: Run test
         run: pnpm exec nx run ${{ matrix.project }}:test --output-style static
 
+
   e2e:
     name: E2E Test Runner
     runs-on: ubuntu-latest

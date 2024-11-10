@@ -1,0 +1,19 @@
+{
+  "name": "nx-docker",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/nx-docker/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/nx-docker",
+        "main": "packages/nx-docker/index.ts",
+        "tsConfig": "packages/nx-docker/tsconfig.lib.json",
+        "assets": ["packages/nx-docker/*.md"]
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "main-spec",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "e2e/main-spec",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@ebizbase/nx-docker:build",
+      "options": {
+        "tags": ["main-spec:test"],
+        "outputs": ["image"],
+        "args": ["ALPINE_VERSION=3.12"]
+      }
+    },
+    "e2e": {
+      "dependsOn": ["main-spec:build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker run --rm main-spec:test curl --version"
+      }
+    }
+  }
+}

@@ -1,0 +1,118 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  pull-requests:  write
+
+jobs:
+
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.release.outputs.releases_created }}
+      applications: ${{ steps.packages.outputs.applications }}
+      libraries: ${{ steps.packages.outputs.libraries }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Release Please
+        id: release
+        uses: googleapis/release-please-action@7987652d64b4581673a76e33ad5e98e3dd56832f # v4
+        with:
+          token: ${{ secrets.GH_BOT_TOKEN }}
+          config-file: release-config.json
+          manifest-file: release-manifest.json
+
+      - name: Prepare list released packages
+        id: packages
+        if: steps.release.outputs.releases_created == 'true'
+        run: |
+          echo "::group::Release Outputs"
+          cat << OBJECT
+            ${{ toJson(steps.release.outputs) }}
+          OBJECT
+          echo "::endgroup::"
+          libraries=()
+          paths_released=$(echo '${{ steps.release.outputs.paths_released }}' | jq -r '. | .[]')
+          for projectPath in $paths_released; do
+             if [[ "$projectPath" != "." ]]; then
+                projectFile="$projectPath/project.json"
+                projectName=$(jq -r '.name' "$projectFile")
+                projectType=$(jq -r '.projectType' "$projectFile")
+
+                echo "::group::Project: $projectName"
+                echo "Path: $projectPath"
+                echo "Project name: $projectName"
+                echo "Project type: $projectType"
+                echo "::endgroup::"
+
+                if [[ "$projectType" == "application" ]]; then
+                  applications+=("$projectName")
+                elif [[ "$projectType" == "library" ]]; then
+                  libraries+=("$projectName")
+                fi
+            fi
+          done
+
+          # Print applications and libraries arrays for debugging in separate groups
+          echo "::group::Applications List"
+          echo "Applications: ${applications[@]}"
+          echo "::endgroup::"
+
+          echo "::group::Libraries List"
+          echo "Libraries: ${libraries[@]}"
+          echo "::endgroup::"
+
+          echo "applications=$(printf '%s\n' "${applications[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
+          echo "libraries=$(printf '%s\n' "${libraries[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
+
+  delivery-libraries:
+    needs: prepare
+    if: ${{ needs.prepare.outputs.released == 'true' && needs.prepare.outputs.libraries != '[""]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        library: ${{fromJson(needs.prepare.outputs.libraries)}}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: ./.github/actions/setup
+        with:
+          dependencies: true
+      - run: npx nx publish ${{ matrix.library }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  delivery-applications:
+    needs: prepare
+    if: ${{ needs.prepare.outputs.released == 'true' && needs.prepare.outputs.applications != '[""]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        application: ${{fromJson(needs.prepare.outputs.applications)}}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: ./.github/actions/setup
+        with:
+          dependencies: true
+          docker-buildx: true
+
+      - uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GH_BOT_TOKEN }}
+
+
+      - run: npx nx publish ${{ matrix.application }}
+

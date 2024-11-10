@@ -1,0 +1,26 @@
+name: PR Size Labeler
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+
+  pr-zize-labeler:
+    name: PR Size Labeler
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Label PR based on size
+        uses: cbrgm/pr-size-labeler-action@main
+        with:
+          github_token: ${{ secrets.GH_BOT_TOKEN }}
+          github_repository: ${{ github.repository }}
+          github_pr_number: ${{ github.event.number }}
+          config_file_path: .github/pr-size.yaml

@@ -1,0 +1,4 @@
+# Prettier friendly markdownlint config (all formatting rules disabled)
+$schema: https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json
+extends: markdownlint/style/prettier
+MD033: false

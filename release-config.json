@@ -1,0 +1,9 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/refs/heads/main/schemas/config.json",
+  "pull-request-header": ":robot: I have created a release pull request for you.",
+  "pull-request-footer": "This pull request was created by the release bot. Merge this request will trigger CD process.",
+  "pull-request-title-pattern": "chore(release): release v${version}",
+  "include-v-in-tag": true,
+  "include-component-in-tag": false,
+  "release-type": "node"
+}

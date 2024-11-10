@@ -1,0 +1,49 @@
+{
+  "name": "devcontainer",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "mounts": [
+    "source=nx-pnpm,target=/var/lib/pnpm,type=volume",
+    "source=nx-dind,target=/var/lib/docker,type=volume",
+    "source=nx-trunk,target=/root/.cache/trunk,type=volume"
+  ],
+  "runArgs": [
+    "--name=nx-devcontainer",
+    "--privileged"
+  ],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/nx,type=bind,consistency=cached",
+  "workspaceFolder": "/workspaces/nx",
+  "overrideCommand": false,
+  "postStartCommand": "pnpm install",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "files.associations": {
+          // accept json with comments
+          "*.json": "jsonc"
+        },
+        "files.exclude": {
+          "**/.git": true,
+          "**/.svn": true,
+          "**/.hg": true,
+          "**/.DS_Store": true,
+          "**/Thumbs.db": true,
+          "trunk-*": true
+        }
+      },
+      "extensions": [
+        "editorconfig.editorconfig",
+        "esbenp.prettier-vscode",
+        "shd101wyy.markdown-preview-enhanced",
+        "firsttris.vscode-jest-runner",
+        "steoates.autoimport",
+        "bradlc.vscode-tailwindcss",
+        "Angular.ng-template",
+        "github.vscode-github-actions",
+        "redhat.vscode-yaml"
+      ]
+    }
+  }
+}

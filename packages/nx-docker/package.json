@@ -3,11 +3,22 @@
   "version": "1.1.0",
   "private": false,
   "description": "The nx plugin build, push containers and analyze images from your applications",
+  "keywords": [
+    "nx",
+    "nx-plugin",
+    "docker",
+    "container",
+    "build",
+    "push",
+    "analyze",
+    "dive"
+  ],
   "bugs": "https://github.com/ebizbase/nx/issues",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ebizbase/nx.git"
   },
+  "license": "MIT",
   "type": "commonjs",
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",

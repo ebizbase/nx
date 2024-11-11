@@ -4,6 +4,6 @@
 
 This is monorepo for nx plugins. See the plugin bellow:
 
-| Package             | Description                                                            |
-| ------------------- | ---------------------------------------------------------------------- |
-| @ebizbase/nx-docker | The NX plugin to build, push and analyze images from your applications |
+| Package                                                                            | Description                                    |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------- |
+| [@ebizbase/nx-docker](https://github.com/ebizbase/nx/tree/main/packages/nx-docker) | The NX plugin to build, push and analyze image |

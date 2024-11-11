@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/ebizbase/nx/compare/v1.0.0...v1.1.0) (2024-11-11)
+
+
+### Features
+
+* **nx-docker:** add dive version config to analyze executor ([ca38204](https://github.com/ebizbase/nx/commit/ca38204009a0ce96924f25534fff5944039e308a))
+
 ## 1.0.0 (2024-11-11)
 
 

@@ -161,6 +161,7 @@ describe('executor', () => {
     const expectedCommandArgs = [
       'buildx',
       'build',
+      '--output=image',
       '--build-arg',
       'ARG1=value1',
       '-t',

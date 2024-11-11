@@ -36,7 +36,64 @@
         "type": "string"
       },
       "description": "The tag of the image to build"
+    },
+    "addHost": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Add a custom host-to-IP mapping (host:ip)"
+    },
+    "allow": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Allow extra privileged entitlement (e.g., network.host, security.insecure)"
+    },
+    "annotation": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Set metadata for an image"
+    },
+    "attest": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Attest the image with an attestation provider"
+    },
+    "cacheFrom": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Images to consider as cache sources"
+    },
+    "cacheTo": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Images to consider as cache destinations"
+    },
+    "shm-size": {
+      "type": "string",
+      "description": "Size of /dev/shm"
+    },
+    "target": {
+      "type": "string",
+      "description": "Set the target build stage to build"
+    },
+    "ulimit": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ulimit options"
     }
   },
-  "required": ["outputs", "tags"]
+  "required": ["tags"]
 }

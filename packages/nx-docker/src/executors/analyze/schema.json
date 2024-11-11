@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "docker image analyze executor schema",
+  "type": "object",
+  "properties": {
+    "ci": {
+      "type": "boolean",
+      "default": false,
+      "description": "Skip the interactive TUI and validate against CI rules"
+    },
+    "highestUserWastedRatio": {
+      "type": "number",
+      "description": "(only valid with --ci given) highest allowable percentage of bytes wasted (as a ratio between 0-1), otherwise CI validation will fail. (default 0.1)"
+    },
+    "highestUserWastedBytes": {
+      "type": "number",
+      "description": "(only valid with --ci given) highest allowable bytes wasted, otherwise CI validation will fail. Set -1 mean disabled"
+    },
+    "lowestEfficiencyRatio": {
+      "type": "number",
+      "description": "(only valid with --ci given) lowest allowable image efficiency (as a ratio between 0-1), otherwise CI validation will fail. (default 0.9)"
+    },
+    "ignoreError": {
+      "type": "boolean",
+      "default": false,
+      "description": "ignore image parsing errors and run the analysis anyway"
+    },
+    "source": {
+      "type": "string",
+      "description": "he container engine to fetch the image from. Allowed values: docker, podman, docker-archive (default docker)",
+      "default": "docker"
+    },
+    "image": {
+      "type": "string",
+      "description": "The image to analyze"
+    }
+  },
+  "required": ["image"]
+}

@@ -1,2 +1,3 @@
 import dockerBuildExecutor from './executors/build/executor';
-export { dockerBuildExecutor };
+import dockerAnalyzeExecutor from './executors/analyze/executor';
+export { dockerBuildExecutor, dockerAnalyzeExecutor };

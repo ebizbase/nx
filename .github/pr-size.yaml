@@ -3,7 +3,7 @@
 # List of files to exclude from size calculation
 # Files matching these patterns will not be considered when calculating PR size
 exclude_files:
-  - npm-lock.yaml
+  - pnpm-lock.yaml
 
 # Configuration for labeling based on the size of the Pull Request
 # Each entry defines a size label, along with thresholds for diff and file count

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/ebizbase/nx/compare/v1.1.0...v1.2.0) (2024-11-11)
+
+
+### Features
+
+* **nx-docker:** add some options to nx docker build ([fbd975c](https://github.com/ebizbase/nx/commit/fbd975cf30f4825ad6794b6cdf0c826a072de55a))
+
 ## [1.1.0](https://github.com/ebizbase/nx/compare/v1.0.0...v1.1.0) (2024-11-11)
 
 

@@ -4,6 +4,11 @@
       "implementation": "./src/executors/build/executor",
       "schema": "./src/executors/build/schema.json",
       "description": "docker build and publish executor"
+    },
+    "analyze": {
+      "implementation": "./src/executors/analyze/executor",
+      "schema": "./src/executors/analyze/schema.json",
+      "description": "docker image analyze executor"
     }
   }
 }

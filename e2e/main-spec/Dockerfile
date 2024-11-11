@@ -5,4 +5,6 @@
 
 ARG ALPINE_VERSION
 FROM alpine:${ALPINE_VERSION}
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl \
+    && rm -rf /var/cache/* lib/apk/* /etc/apk/* /etc/ssl/*
+

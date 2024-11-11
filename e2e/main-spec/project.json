@@ -13,11 +13,26 @@
         "args": ["ALPINE_VERSION=3.12"]
       }
     },
-    "e2e": {
+    "build-test": {
       "dependsOn": ["main-spec:build"],
       "executor": "nx:run-commands",
       "options": {
         "command": "docker run --rm main-spec:test curl --version"
+      }
+    },
+    "analyze-test": {
+      "dependsOn": ["main-spec:build"],
+      "executor": "@ebizbase/nx-docker:analyze",
+      "options": {
+        "image": "main-spec:test",
+        "ci": true
+      }
+    },
+    "e2e": {
+      "dependsOn": ["main-spec:build-test", "main-spec:analyze-test"],
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo Done"
       }
     }
   }

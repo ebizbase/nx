@@ -57,7 +57,7 @@ const executor: PromiseExecutor<AnalyzeExecutorSchema> = async (options, context
         '-ti',
         '--rm',
         '-v',
-        '/var/run/docker.sock:/var/run/docker.sock',
+        `${options.dockerSocket || '/var/run/docker.sock'}:/var/run/docker.sock`,
         'wagoodman/dive',
         options.image,
         ...args,

@@ -34,6 +34,10 @@
     "image": {
       "type": "string",
       "description": "The image to analyze"
+    },
+    "dockerSocket": {
+      "type": "string",
+      "description": "The docker socket to use for the analysis"
     }
   },
   "required": ["image"]

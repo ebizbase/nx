@@ -34,8 +34,9 @@ jobs:
       - name: Get projects to unit test and e2e test
         id: extractor
         run: |
-          event="${{ github.event_name }} "
+          event="${{ github.event_name }}"
           if [ "$event" == "merge_group" ]; then
+            echo "Merge group event"
             affected=$(pnpm exec nx show projects --json | jq -r '.[]')
             tests=$(pnpm exec nx show projects --with-target test --json | jq -r '.[]')
             e2es=$(pnpm exec nx show projects --with-target e2e --json | jq -r '.[]')
@@ -46,6 +47,7 @@ jobs:
             echo "test-projects=$(printf '%s\n' "${tests[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
             echo "e2e-projects=$(printf '%s\n' "${e2es[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
           else
+            echo "Pull request event"
             affected=$(pnpm exec nx show projects --affected --json | jq -r '.[]')
             tests=$(pnpm exec nx show projects --affected --with-target test --json | jq -r '.[]')
             e2es=$(pnpm exec nx show projects --affected --with-target e2e --json | jq -r '.[]')

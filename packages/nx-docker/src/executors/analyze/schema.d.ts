@@ -7,4 +7,5 @@ export interface AnalyzeExecutorSchema {
   source: string;
   image: string;
   dockerSocket?: string;
+  version: string;
 }

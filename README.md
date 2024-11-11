@@ -1,4 +1,6 @@
-# The nx plugins
+![Banner](https://github.com/ebizbase/nx/blob/main/banner.png?raw=true)
+
+This is monorepo for nx plugins. See the plugin bellow
 
 | Package             | Description                                                                        |
 | ------------------- | ---------------------------------------------------------------------------------- |

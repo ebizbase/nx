@@ -1,34 +1,14 @@
 import { logger, PromiseExecutor } from '@nx/devkit';
 import { execFileSync } from 'child_process';
-
 import { AnalyzeExecutorSchema } from './schema';
+import { DockerUtils } from '../../utils/docker.utils';
 
-const executor: PromiseExecutor<AnalyzeExecutorSchema> = async (options, context) => {
-  try {
-    execFileSync('docker', ['info'], { stdio: context.isVerbose ? 'inherit' : 'ignore' });
-  } catch {
-    logger.error('Docker is not installed or docker daemon is not running');
-    return { success: false };
-  }
-
+export function getDiveArgs(options: AnalyzeExecutorSchema): string[] {
   const args = [];
 
-  if (!options.ci) {
-    if (options.highestUserWastedBytes) {
-      logger.error('highestUserWastedBytes is not supported in non-CI mode');
-      return { success: false };
-    }
+  args.push(options.image);
 
-    if (options.highestUserWastedRatio) {
-      logger.error('highestUserWastedRatio is not supported in non-CI mode');
-      return { success: false };
-    }
-
-    if (options.lowestEfficiencyRatio) {
-      logger.error('lowestEfficiencyRatio is not supported in non-CI mode');
-      return { success: false };
-    }
-  } else {
+  if (options.ci) {
     args.push('--ci');
     if (options.highestUserWastedBytes) {
       args.push(`--highestUserWastedBytes=${options.highestUserWastedBytes}`);
@@ -49,34 +29,44 @@ const executor: PromiseExecutor<AnalyzeExecutorSchema> = async (options, context
 
   args.push(`--source=${options.source}`);
 
-  try {
-    logger.info(
-      [
-        'docker',
-        'run',
-        '-ti',
-        '--rm',
-        '-v',
-        `${options.dockerSocket || '/var/run/docker.sock'}:/var/run/docker.sock`,
-        'wagoodman/dive',
-        options.image,
-        ...args,
-      ].join(' ')
-    );
+  return args;
+}
 
-    execFileSync(
-      'docker',
-      [
-        'run',
-        ...(options.ci ? ['--rm'] : ['-ti', '--rm']),
-        '-v',
-        '/var/run/docker.sock:/var/run/docker.sock',
-        'wagoodman/dive',
-        options.image,
-        ...args,
-      ],
-      { stdio: 'inherit', cwd: context.root }
-    );
+const executor: PromiseExecutor<AnalyzeExecutorSchema> = async (options, context) => {
+  const dockerService = new DockerUtils();
+
+  // Check docker installed and docker daemon is running
+  if (!dockerService.checkDockerInstalled(context.isVerbose)) {
+    logger.error('Docker is not installed or docker daemon is not running');
+    return { success: false };
+  }
+
+  if (!options.ci) {
+    if (
+      options.highestUserWastedBytes ||
+      options.highestUserWastedRatio ||
+      options.lowestEfficiencyRatio
+    ) {
+      logger.error(
+        'highestUserWastedBytes, highestUserWastedRatio, and lowestEfficiencyRatio are only supported in CI mode'
+      );
+      return { success: false };
+    }
+  }
+
+  const dockerLocalSocket = options.dockerSocket || '/var/run/docker.sock';
+  const dockerArgs = [
+    'run',
+    ...(options.ci ? ['--rm'] : ['-ti', '--rm']),
+    '-v',
+    `${dockerLocalSocket}:/var/run/docker.sock`,
+    'wagoodman/dive',
+  ];
+  const diveArgs = getDiveArgs(options);
+
+  try {
+    logger.info(['docker', ...dockerArgs, ...diveArgs].join(' '));
+    execFileSync('docker', [...dockerArgs, ...diveArgs], { stdio: 'inherit', cwd: context.root });
     return { success: true };
   } catch (error) {
     logger.fatal('Failed to build Docker image', error);

@@ -8,6 +8,10 @@
     "type": "git",
     "url": "git+https://github.com/ebizbase/nx.git"
   },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "type": "commonjs",
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",

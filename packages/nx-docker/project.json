@@ -7,12 +7,26 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/nx-docker",
         "main": "packages/nx-docker/index.ts",
         "tsConfig": "packages/nx-docker/tsconfig.lib.json",
-        "assets": ["packages/nx-docker/*.md"]
+        "assets": [
+          "packages/nx-docker/*.md"
+        ]
+      }
+    },
+    "publish": {
+      "dependsOn": [
+        "nx-docker:build"
+      ],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/packages/nx-docker",
+        "command": "npm publish"
       }
     }
   }

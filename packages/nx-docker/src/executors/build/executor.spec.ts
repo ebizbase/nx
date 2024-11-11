@@ -1,177 +1,232 @@
-import executor from './executor';
-import { logger } from '@nx/devkit';
-import { execFileSync } from 'child_process';
+// executor.spec.ts
+import { ExecutorContext, logger } from '@nx/devkit';
 import { existsSync } from 'fs';
+import { DockerExecutorSchema } from './schema';
+import executor from './executor';
+import { ProjectUtils } from '../../utils/project.utils';
+import { DockerUtils } from '../../utils/docker.utils';
+import { execFileSync } from 'child_process';
 
-jest.mock('child_process');
-jest.mock('fs');
 jest.mock('@nx/devkit', () => ({
   logger: {
     error: jest.fn(),
+    fatal: jest.fn(),
     warn: jest.fn(),
     info: jest.fn(),
-    fatal: jest.fn(),
   },
 }));
 
-describe('dockerExecutor', () => {
-  const context = {
+jest.mock('fs', () => ({
+  existsSync: jest.fn(),
+}));
+
+jest.mock('../../utils/docker.utils');
+jest.mock('../../utils/project.utils');
+jest.mock('child_process', () => ({
+  execFileSync: jest.fn(),
+}));
+
+describe('executor', () => {
+  const context: ExecutorContext = {
     isVerbose: false,
     projectName: 'test-project',
     projectsConfigurations: {
       version: 1,
       projects: {
-        'test-project': {
-          root: '/root/test-project',
-        },
+        'test-project': { root: '/path/to/test-project' },
       },
     },
-    root: '/root',
+    root: '/path/to/root',
     nxJsonConfiguration: {},
-    cwd: '/root',
+    cwd: '/path/to/root',
     projectGraph: {
       nodes: {},
       dependencies: {},
     },
   };
-
-  const options = {
+  const options: DockerExecutorSchema = {
+    file: undefined,
+    context: undefined,
+    tags: ['latest'],
+    args: ['ARG1=value1'],
     ci: false,
     outputs: ['image'],
-    file: '/root/test-project/Dockerfile',
-    context: '.',
-    tags: ['test:latest'],
-    args: ['ARG1=value1'],
   };
+  let dockerUtils: jest.Mocked<DockerUtils>;
+  let projectUtils: jest.Mocked<ProjectUtils>;
 
   beforeEach(() => {
+    dockerUtils = new DockerUtils() as jest.Mocked<DockerUtils>;
+    dockerUtils.checkDockerInstalled.mockReturnValue(true);
+    dockerUtils.checkBuildxInstalled.mockReturnValue(true);
+
+    (DockerUtils as jest.Mock).mockImplementation(() => dockerUtils);
+
+    projectUtils = new ProjectUtils(context) as jest.Mocked<ProjectUtils>;
+    projectUtils.getProjectRoot.mockReturnValue('/path/to/test-project');
+
+    (ProjectUtils as jest.Mock).mockImplementation(() => projectUtils);
+    (existsSync as jest.Mock).mockReturnValue(true);
+  });
+
+  afterEach(() => {
     jest.resetAllMocks();
   });
 
-  it('should return success false if docker is not installed', async () => {
-    (execFileSync as jest.Mock).mockImplementation((command, args) => {
-      if (command === 'docker' && args[0] === 'info') {
-        throw new Error();
-      }
-    });
+  it('should return success when Docker build is successful', async () => {
+    // Arrange
+
+    // Act
     const result = await executor(options, context);
+
+    // Assert
+    expect(result).toEqual({ success: true });
+    expect(execFileSync).toHaveBeenCalled();
+  });
+
+  it('should return failure if Docker is not installed', async () => {
+    // Arrange
+    dockerUtils.checkDockerInstalled.mockReturnValue(false);
+
+    // Act
+    const result = await executor(options, context);
+
+    // Assert
+    expect(result).toEqual({ success: false });
     expect(logger.error).toHaveBeenCalledWith(
       'Docker is not installed or docker daemon is not running'
     );
-    expect(result).toEqual({ success: false });
   });
 
-  it('should return success false if no project name is provided', async () => {
-    const result = await executor(options, { ...context, projectName: undefined });
-    expect(logger.error).toHaveBeenCalledWith('No project name provided');
-    expect(result).toEqual({ success: false });
-  });
+  it('should warn if buildx is not installed and fallback to docker build', async () => {
+    // Arrange
+    dockerUtils.checkBuildxInstalled.mockReturnValue(false);
 
-  it('should return success false if Dockerfile does not exist', async () => {
-    (existsSync as jest.Mock).mockReturnValueOnce(false);
+    // Act
+    await executor(options, context);
 
-    const result = await executor(options, context);
-
-    expect(logger.error).toHaveBeenCalledWith(
-      'Dockerfile not found at /root/test-project/Dockerfile'
+    // Assert
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Buildx is not installed falling back to docker build. Docker buildx is not installed so performance may be degraded'
     );
-    expect(result).toEqual({ success: false });
+    expect(execFileSync).toHaveBeenCalledWith(
+      "docker",
+      expect.arrayContaining(['build']),
+      { stdio: 'inherit', cwd: context.root }
+    );
   });
 
-  it('should return success false if context path does not exist', async () => {
-    (existsSync as jest.Mock).mockReturnValueOnce(true).mockReturnValueOnce(false);
+  it('should return failure if project name is missing', async () => {
+    // Arrange
+    (ProjectUtils as jest.Mock).mockImplementation(() => {
+      throw new Error('No project name provided');
+    });
 
+    // Act
     const result = await executor(options, context);
 
-    expect(logger.error).toHaveBeenCalledWith('Context path not found at .');
+    // Assert
     expect(result).toEqual({ success: false });
+    expect(logger.fatal).toHaveBeenCalledWith('No project name provided', expect.any(Error));
   });
 
-  it('should log a warning if docker buildx is not installed', async () => {
-    (existsSync as jest.Mock).mockReturnValue(true);
-    (execFileSync as jest.Mock).mockImplementation((command: string, args: string[]) => {
-      if (command === 'docker' && args[0] === 'buildx' && args[1] === 'version') {
-        throw new Error('buildx not found');
-      }
+  it('should return failure if Dockerfile is missing', async () => {
+    // Arrange
+    (existsSync as jest.Mock).mockImplementation((path) => !path.includes('Dockerfile'));
+
+    // Act
+    const result = await executor(options, context);
+
+    // Assert
+    expect(result).toEqual({ success: false });
+    expect(logger.error).toHaveBeenCalledWith(
+      'Dockerfile not found at /path/to/test-project/Dockerfile'
+    );
+  });
+
+  it('should return failure if context path is missing', async () => {
+    // Arrange
+    (existsSync as jest.Mock).mockImplementation((path) => !path.includes('.'));
+
+    // Act
+    const result = await executor(options, context);
+
+    // Assert
+    expect(result).toEqual({ success: false });
+    expect(logger.error).toHaveBeenCalledWith('Context path not found at .');
+  });
+
+  it('should build Docker image with provided tags and build args', async () => {
+    // Arrange
+    const expectedCommand = 'docker'
+    const expectedCommandArgs = [
+      'buildx',
+      'build',
+      '--build-arg',
+      'ARG1=value1',
+      '-t',
+      'latest',
+      '-f',
+      '/path/to/test-project/Dockerfile',
+      '.',
+    ];
+
+    // Act
+    await executor(options, context);
+
+    // Assert
+    expect(execFileSync).toHaveBeenCalledWith(expectedCommand, expectedCommandArgs, { stdio: 'inherit', cwd: context.root });
+  });
+
+  it('should log failure if Docker build fails', async () => {
+    // Arrange
+    (execFileSync as jest.Mock).mockImplementation(() => {
+      throw new Error('Docker build failed');
     });
+
+    // Act
+    const result = await executor(options, context);
+
+    // Assert
+    expect(result).toEqual({ success: false });
+    expect(logger.fatal).toHaveBeenCalledWith('Failed to build Docker image', expect.any(Error));
+  });
+
+  it('should build Docker image with tag arguments when tags are provided', async () => {
+    options.tags = ['latest', 'v1.0.0'];
 
     await executor(options, context);
 
-    expect(logger.warn).toHaveBeenCalledWith(
-      'Docker buildx is not installed so performance may be degraded'
-    );
-  });
-
-  it('should return success true if docker build succeeds', async () => {
-    (existsSync as jest.Mock).mockReturnValue(true);
-    (execFileSync as jest.Mock).mockImplementation((command: string, args: string[]) => {
-      if (command === 'docker' && args[0] === 'buildx' && args[1] === 'version') {
-        throw new Error('buildx not found');
-      }
-    });
-
-    const result = await executor(options, context);
-    expect(execFileSync).toHaveBeenLastCalledWith(
-      'docker',
-      [
-        'build',
-        '--build-arg',
-        'ARG1=value1',
-        '-t',
-        'test:latest',
-        '-f',
-        '/root/test-project/Dockerfile',
-        '.',
-      ],
-      { cwd: '/root', stdio: 'inherit' }
-    );
-    expect(result).toEqual({ success: true });
-  });
-
-  it('should return success false if docker build fails', async () => {
-    (existsSync as jest.Mock).mockReturnValue(true);
-    (execFileSync as jest.Mock).mockImplementation((_command: string, args: string[]) => {
-      if (args[args.length - 1] === '.') {
-        throw new Error();
-      }
-    });
-
-    const result = await executor(options, context);
-
-    expect(logger.fatal).toHaveBeenCalledWith('Failed to build Docker image', expect.any(Error));
-    expect(result).toEqual({ success: false });
-  });
-
-  it('should handle multiple tags correctly', async () => {
-    (existsSync as jest.Mock).mockReturnValue(true);
-    const multiTagOptions = { ...options, tags: ['test:latest', 'test:v1'] };
-    await executor(multiTagOptions, context);
+    const expectedTagArgs = ['-t', 'latest', '-t', 'v1.0.0'];
     expect(execFileSync).toHaveBeenCalledWith(
-      'docker',
-      [
-        'buildx',
-        'build',
-        '--build-arg',
-        'ARG1=value1',
-        '-t',
-        'test:latest',
-        '-t',
-        'test:v1',
-        '-f',
-        '/root/test-project/Dockerfile',
-        '.',
-      ],
-      expect.any(Object)
+      "docker",
+      expect.arrayContaining(expectedTagArgs),
+      { stdio: 'inherit', cwd: context.root }
     );
   });
 
-  it('should log additional info when verbose mode is on', async () => {
-    (existsSync as jest.Mock).mockReturnValue(true);
-    const verboseContext = { ...context, isVerbose: true };
-    await executor(options, verboseContext);
-    expect(execFileSync).toHaveBeenCalledWith(expect.any(String), expect.any(Array), {
-      stdio: 'inherit',
-      cwd: '/root',
-    });
+  it('should build Docker image with build arguments when args are provided', async () => {
+    options.args = ['ARG1=value1', 'ARG2=value2'];
+
+    await executor(options, context);
+
+    const expectedBuildArgs = ['--build-arg', 'ARG1=value1', '--build-arg', 'ARG2=value2'];
+    expect(execFileSync).toHaveBeenCalledWith(
+      "docker",
+      expect.arrayContaining(expectedBuildArgs),
+      { stdio: 'inherit', cwd: context.root}
+    );
+  });
+
+  it('should not add build arguments if args are not provided', async () => {
+    options.args = undefined;
+
+    await executor(options, context);
+
+    expect(execFileSync).toHaveBeenCalledWith(
+      "docker",
+      expect.not.arrayContaining(['--build-arg']),
+      { stdio: 'inherit', cwd: context.root }
+    );
   });
 });

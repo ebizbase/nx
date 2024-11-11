@@ -25,10 +25,9 @@ jobs:
       - name: Trunk Code Quality
         uses: trunk-io/trunk-action@4d5ecc89b2691705fd08c747c78652d2fc806a94 # v1
         with:
-          check-mode: ${{ github.event_name == 'pull_request' &&  'pull_request' || 'all' }}
+          check-mode: ${{ github.event_name == 'pull_request_target' &&  'pull_request' || 'all' }}
           github-token: ${{ secrets.GH_BOT_TOKEN }}
       - name: Create check on merge group
-        if: ${{ github.event_name == 'merge_group' }}
         uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

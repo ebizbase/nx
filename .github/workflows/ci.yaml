@@ -116,7 +116,7 @@ jobs:
           conclusion: ${{needs.e2e.result}}
       - name: Generate list of affected projects report
         id: affected-project-report
-        if: github.event_name == 'pull_request' && startsWith(github.base_ref, 'release-please-')==false
+        if: github.event_name == 'pull_request_target' && startsWith(github.base_ref, 'release-please-')==false
         run: |
           OUTPUT='## CI Report\n\n'
           OUTPUT+="### Affected projects\n"
@@ -127,7 +127,7 @@ jobs:
           echo "report=$OUTPUT" >> $GITHUB_OUTPUT
       - name: Report to PR
         uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
-        if: github.event_name == 'pull_request' && startsWith(github.base_ref, 'release-please-')==false
+        if: github.event_name == 'pull_request_target' && startsWith(github.base_ref, 'release-please-')==false
         with:
           github-token: ${{ secrets.GH_BOT_TOKEN }}
           comment-tag: ci-report

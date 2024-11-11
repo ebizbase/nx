@@ -27,6 +27,7 @@ jobs:
           token: ${{ secrets.GH_BOT_TOKEN }}
           config-file: release-config.json
           manifest-file: release-manifest.json
+          fork: true
 
       - name: Prepare list released packages
         id: packages

@@ -1,9 +1,12 @@
-import { execFileSync } from 'child_process';
 import { logger } from '@nx/devkit';
-import executor from './executor';
+import { execFileSync } from 'child_process';
+import executor, { getDiveArgs } from './executor';
 import { AnalyzeExecutorSchema } from './schema';
+import { DockerUtils } from '../../utils/docker.utils';
 
-jest.mock('child_process');
+jest.mock('child_process', () => ({
+  execFileSync: jest.fn(),
+}));
 jest.mock('@nx/devkit', () => ({
   logger: {
     info: jest.fn(),
@@ -11,93 +14,168 @@ jest.mock('@nx/devkit', () => ({
     fatal: jest.fn(),
   },
 }));
+jest.mock('../../utils/docker.utils');
 
-describe('AnalyzeExecutor', () => {
-  const mockContext = {
-    isVerbose: false,
-    root: '/root/path',
-    projectsConfigurations: {
-      version: 1,
-      projects: {
-        'test-project': {
-          root: '/root/test-project',
-        },
-      },
-    },
-    nxJsonConfiguration: {},
-    cwd: '/root/path',
-    projectGraph: {
-      nodes: {},
-      dependencies: {},
-    },
-  };
-  const mockOptions: AnalyzeExecutorSchema = {
-    ci: false,
-    source: 'src',
-    image: 'image_name',
-    highestUserWastedBytes: undefined,
-    highestUserWastedRatio: undefined,
-    lowestEfficiencyRatio: undefined,
-    ignoreError: false,
-  };
+describe('Docker Analyze Executor', () => {
+  let context: any;
+  let dockerServiceMock: jest.Mocked<DockerUtils>;
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    context = { isVerbose: false, root: '/test' };
+    dockerServiceMock = new DockerUtils() as jest.Mocked<DockerUtils>;
+    dockerServiceMock.checkDockerInstalled.mockReturnValue(true);
+    (DockerUtils as jest.Mock).mockImplementation(() => dockerServiceMock);
   });
 
-  it('should return success false if docker is not running', async () => {
-    (execFileSync as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('Docker not running');
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('getDiveArgs function', () => {
+    it('should build arguments for CI mode with specified options', () => {
+      const options: AnalyzeExecutorSchema = {
+        ci: true,
+        image: 'test-image',
+        highestUserWastedBytes: 500,
+        highestUserWastedRatio: 0.3,
+        lowestEfficiencyRatio: 0.8,
+        source: '/source/path',
+        ignoreError: true,
+      };
+      const args = getDiveArgs(options);
+      expect(args).toEqual([
+        'test-image',
+        '--ci',
+        '--highestUserWastedBytes=500',
+        '--highestUserWastedPercent=0.3',
+        '--lowestEfficiency=0.8',
+        '--ignore-errors',
+        '--source=/source/path',
+      ]);
     });
 
-    const result = await executor(mockOptions, mockContext);
-
-    expect(result).toEqual({ success: false });
-    expect(logger.error).toHaveBeenCalledWith(
-      'Docker is not installed or docker daemon is not running'
-    );
+    it('should build arguments without CI-specific options if CI mode is disabled', () => {
+      const options: AnalyzeExecutorSchema = {
+        ci: false,
+        image: 'test-image',
+        source: '/source/path',
+        ignoreError: false,
+      };
+      const args = getDiveArgs(options);
+      expect(args).toEqual(['test-image', '--source=/source/path']);
+    });
   });
 
-  it('should return success false and log errors if non-CI mode has unsupported options', async () => {
-    const options = { ...mockOptions, highestUserWastedBytes: 100 };
-    const result = await executor(options, mockContext);
+  describe('executor function', () => {
+    it('should return success if Docker command executes without errors', async () => {
+      const options: AnalyzeExecutorSchema = {
+        ci: true,
+        image: 'test-image',
+        source: '/source/path',
+        ignoreError: false,
+      };
+      const result = await executor(options, context);
+      expect(result).toEqual({ success: true });
+      expect(execFileSync).toHaveBeenCalled();
+    });
 
-    expect(result).toEqual({ success: false });
-    expect(logger.error).toHaveBeenCalledWith(
-      'highestUserWastedBytes is not supported in non-CI mode'
-    );
-  });
+    it('should log error and return failure if Docker is not installed', async () => {
+      dockerServiceMock.checkDockerInstalled.mockReturnValue(false);
+      const options: AnalyzeExecutorSchema = {
+        ci: true,
+        image: 'test-image',
+        source: '/source/path',
+        ignoreError: false,
+      };
+      const result = await executor(options, context);
+      expect(result).toEqual({ success: false });
+      expect(logger.error).toHaveBeenCalledWith(
+        'Docker is not installed or docker daemon is not running'
+      );
+      expect(execFileSync).not.toHaveBeenCalled();
+    });
 
-  it('should add CI specific args when options.ci is true', async () => {
-    const options = {
-      ...mockOptions,
-      ci: true,
-      highestUserWastedBytes: 100,
-      highestUserWastedRatio: 50,
-      lowestEfficiencyRatio: 20,
-    };
+    it('should log error if unsupported options are provided in non-CI mode', async () => {
+      const optionsToChecks = [
+        'highestUserWastedBytes',
+        'highestUserWastedRatio',
+        'lowestEfficiencyRatio',
+      ];
+      for (let i = 0; i < optionsToChecks.length; i++) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const options: any = {
+          ci: false,
+          image: 'test-image',
+          source: '/source/path',
+          ignoreError: false,
+        };
+        options[optionsToChecks[i]] = 1;
+        const result = await executor(options, context);
+        expect(result).toEqual({ success: false });
+        expect(logger.error).toHaveBeenCalledWith(
+          'highestUserWastedBytes, highestUserWastedRatio, and lowestEfficiencyRatio are only supported in CI mode'
+        );
+      }
+    });
 
-    (execFileSync as jest.Mock).mockReturnValueOnce(undefined);
+    it('should add ignore-errors flag if specified', async () => {
+      const options: AnalyzeExecutorSchema = {
+        ci: true,
+        image: 'test-image',
+        source: '/source/path',
+        ignoreError: true,
+      };
+      await executor(options, context);
+      expect(execFileSync).toHaveBeenCalledWith(
+        'docker',
+        expect.arrayContaining(['--ignore-errors']),
+        expect.anything()
+      );
+    });
 
-    const result = await executor(options, mockContext);
+    it('should add ignore-errors flag if specified', async () => {
+      const options: AnalyzeExecutorSchema = {
+        ci: true,
+        image: 'test-image',
+        source: '/source/path',
+        ignoreError: true,
+      };
+      await executor(options, context);
+      expect(execFileSync).toHaveBeenCalledWith(
+        'docker',
+        expect.arrayContaining(['--ignore-errors']),
+        expect.anything()
+      );
+    });
 
-    expect(result).toEqual({ success: true });
-    expect(execFileSync).toHaveBeenCalledWith(
-      'docker',
-      [
-        'run',
-        '--rm',
-        '-v',
-        '/var/run/docker.sock:/var/run/docker.sock',
-        'wagoodman/dive',
-        'image_name',
-        '--ci',
-        '--highestUserWastedBytes=100',
-        '--highestUserWastedPercent=50',
-        '--lowestEfficiency=20',
-        '--source=src',
-      ],
-      { stdio: 'inherit', cwd: '/root/path' }
-    );
+    it('should add -ti on non ci mode', async () => {
+      const options: AnalyzeExecutorSchema = {
+        ci: false,
+        image: 'test-image',
+        source: '/source/path',
+        ignoreError: true,
+      };
+      await executor(options, context);
+      expect(execFileSync).toHaveBeenCalledWith(
+        'docker',
+        expect.arrayContaining(['-ti']),
+        expect.anything()
+      );
+    });
+
+    it('should handle failure in Docker command and log fatal error', async () => {
+      const options: AnalyzeExecutorSchema = {
+        ci: true,
+        image: 'test-image',
+        source: '/source/path',
+        ignoreError: false,
+      };
+      (execFileSync as jest.Mock).mockImplementation(() => {
+        throw new Error('Docker error');
+      });
+      const result = await executor(options, context);
+      expect(result).toEqual({ success: false });
+      expect(logger.fatal).toHaveBeenCalledWith('Failed to build Docker image', expect.any(Error));
+    });
   });
 });

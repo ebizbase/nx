@@ -120,7 +120,7 @@ jobs:
         run: |
           OUTPUT='## Project affected by this PR'
           for project in $(echo "${{ needs.prepare.outputs.affected }}" | jq -r '.[]'); do
-            OUTPUT="$OUTPUT\n- $project"
+            OUTPUT="${OUTPUT}\n- $project"
           done
           echo "report=$OUTPUT" >> $GITHUB_OUTPUT
       - name: Report to PR

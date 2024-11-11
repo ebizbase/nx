@@ -6,4 +6,5 @@ export interface AnalyzeExecutorSchema {
   ignoreError: boolean;
   source: string;
   image: string;
+  dockerSocket?: string;
 }

@@ -28,6 +28,14 @@
         "cwd": "dist/packages/nx-docker",
         "command": "npm publish"
       }
+    },
+    "publish": {
+      "dependsOn": ["nx-docker:build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/packages/nx-docker",
+        "command": "npm publish"
+      }
     }
   }
 }

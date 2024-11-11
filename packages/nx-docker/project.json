@@ -12,7 +12,7 @@
         "outputPath": "dist/packages/nx-docker",
         "main": "packages/nx-docker/index.ts",
         "tsConfig": "packages/nx-docker/tsconfig.lib.json",
-        "assets": ["packages/nx-docker/*.md"]
+        "assets": ["packages/nx-docker/*.md", "packages/nx-docker/.npmrc"]
       }
     },
     "publish": {
@@ -20,7 +20,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "dist/packages/nx-docker",
-        "command": "npm publish"
+        "command": "pnpm publish"
       }
     }
   }

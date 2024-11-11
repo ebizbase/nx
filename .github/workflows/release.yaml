@@ -86,7 +86,7 @@ jobs:
           dependencies: true
       - run: npx nx publish ${{ matrix.library }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_REGISTRY_TOKEN: ${{ secrets.NPM_REGISTRY_TOKEN }}
 
   delivery-applications:
     needs: prepare
@@ -96,13 +96,16 @@ jobs:
       matrix:
         application: ${{fromJson(needs.prepare.outputs.applications)}}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: ./.github/actions/setup
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Setup project
+        uses: ./.github/actions/setup
         with:
           dependencies: true
           docker-buildx: true
 
-      - uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
+      - name: Login to container registries
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}

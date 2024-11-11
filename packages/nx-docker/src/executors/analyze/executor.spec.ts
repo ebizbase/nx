@@ -41,6 +41,7 @@ describe('Docker Analyze Executor', () => {
         lowestEfficiencyRatio: 0.8,
         source: '/source/path',
         ignoreError: true,
+        version: 'latest',
       };
       const args = getDiveArgs(options);
       expect(args).toEqual([
@@ -60,6 +61,7 @@ describe('Docker Analyze Executor', () => {
         image: 'test-image',
         source: '/source/path',
         ignoreError: false,
+        version: 'latest',
       };
       const args = getDiveArgs(options);
       expect(args).toEqual(['test-image', '--source=/source/path']);
@@ -73,6 +75,7 @@ describe('Docker Analyze Executor', () => {
         image: 'test-image',
         source: '/source/path',
         ignoreError: false,
+        version: 'latest',
       };
       const result = await executor(options, context);
       expect(result).toEqual({ success: true });
@@ -86,6 +89,7 @@ describe('Docker Analyze Executor', () => {
         image: 'test-image',
         source: '/source/path',
         ignoreError: false,
+        version: 'latest',
       };
       const result = await executor(options, context);
       expect(result).toEqual({ success: false });
@@ -102,7 +106,6 @@ describe('Docker Analyze Executor', () => {
         'lowestEfficiencyRatio',
       ];
       for (let i = 0; i < optionsToChecks.length; i++) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const options: any = {
           ci: false,
           image: 'test-image',
@@ -124,6 +127,7 @@ describe('Docker Analyze Executor', () => {
         image: 'test-image',
         source: '/source/path',
         ignoreError: true,
+        version: 'latest',
       };
       await executor(options, context);
       expect(execFileSync).toHaveBeenCalledWith(
@@ -139,6 +143,7 @@ describe('Docker Analyze Executor', () => {
         image: 'test-image',
         source: '/source/path',
         ignoreError: true,
+        version: 'latest',
       };
       await executor(options, context);
       expect(execFileSync).toHaveBeenCalledWith(
@@ -154,11 +159,28 @@ describe('Docker Analyze Executor', () => {
         image: 'test-image',
         source: '/source/path',
         ignoreError: true,
+        version: 'latest',
       };
       await executor(options, context);
       expect(execFileSync).toHaveBeenCalledWith(
         'docker',
         expect.arrayContaining(['-ti']),
+        expect.anything()
+      );
+    });
+
+    it('should set version of dive', async () => {
+      const options: AnalyzeExecutorSchema = {
+        ci: false,
+        image: 'test-image',
+        source: '/source/path',
+        ignoreError: true,
+        version: '1.0.0',
+      };
+      await executor(options, context);
+      expect(execFileSync).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.arrayContaining(['wagoodman/dive:1.0.0']),
         expect.anything()
       );
     });
@@ -169,6 +191,7 @@ describe('Docker Analyze Executor', () => {
         image: 'test-image',
         source: '/source/path',
         ignoreError: false,
+        version: 'latest',
       };
       (execFileSync as jest.Mock).mockImplementation(() => {
         throw new Error('Docker error');

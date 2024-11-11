@@ -60,7 +60,7 @@ const executor: PromiseExecutor<AnalyzeExecutorSchema> = async (options, context
     ...(options.ci ? ['--rm'] : ['-ti', '--rm']),
     '-v',
     `${dockerLocalSocket}:/var/run/docker.sock`,
-    'wagoodman/dive',
+    `wagoodman/dive:${options.version}`,
   ];
   const diveArgs = getDiveArgs(options);
 

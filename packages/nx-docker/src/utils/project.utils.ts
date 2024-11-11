@@ -1,4 +1,4 @@
-import { ExecutorContext } from '@nx/devkit';
+import { ExecutorContext, ProjectConfiguration } from '@nx/devkit';
 
 export class ProjectUtils {
   private projectName: string;
@@ -12,11 +12,11 @@ export class ProjectUtils {
   }
 
   public getProjectName(): string {
-    return this.projectName!;
+    return this.projectName;
   }
 
-  public getProjectConfig(): any {
-    return this.context.projectsConfigurations.projects[this.projectName!];
+  public getProjectConfig(): ProjectConfiguration {
+    return this.context.projectsConfigurations.projects[this.projectName];
   }
 
   public getProjectRoot(): string {

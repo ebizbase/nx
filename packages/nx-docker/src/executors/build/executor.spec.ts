@@ -109,11 +109,10 @@ describe('executor', () => {
     expect(logger.warn).toHaveBeenCalledWith(
       'Buildx is not installed falling back to docker build. Docker buildx is not installed so performance may be degraded'
     );
-    expect(execFileSync).toHaveBeenCalledWith(
-      "docker",
-      expect.arrayContaining(['build']),
-      { stdio: 'inherit', cwd: context.root }
-    );
+    expect(execFileSync).toHaveBeenCalledWith('docker', expect.arrayContaining(['build']), {
+      stdio: 'inherit',
+      cwd: context.root,
+    });
   });
 
   it('should return failure if project name is missing', async () => {
@@ -158,7 +157,7 @@ describe('executor', () => {
 
   it('should build Docker image with provided tags and build args', async () => {
     // Arrange
-    const expectedCommand = 'docker'
+    const expectedCommand = 'docker';
     const expectedCommandArgs = [
       'buildx',
       'build',
@@ -175,7 +174,10 @@ describe('executor', () => {
     await executor(options, context);
 
     // Assert
-    expect(execFileSync).toHaveBeenCalledWith(expectedCommand, expectedCommandArgs, { stdio: 'inherit', cwd: context.root });
+    expect(execFileSync).toHaveBeenCalledWith(expectedCommand, expectedCommandArgs, {
+      stdio: 'inherit',
+      cwd: context.root,
+    });
   });
 
   it('should log failure if Docker build fails', async () => {
@@ -198,11 +200,10 @@ describe('executor', () => {
     await executor(options, context);
 
     const expectedTagArgs = ['-t', 'latest', '-t', 'v1.0.0'];
-    expect(execFileSync).toHaveBeenCalledWith(
-      "docker",
-      expect.arrayContaining(expectedTagArgs),
-      { stdio: 'inherit', cwd: context.root }
-    );
+    expect(execFileSync).toHaveBeenCalledWith('docker', expect.arrayContaining(expectedTagArgs), {
+      stdio: 'inherit',
+      cwd: context.root,
+    });
   });
 
   it('should build Docker image with build arguments when args are provided', async () => {
@@ -211,11 +212,10 @@ describe('executor', () => {
     await executor(options, context);
 
     const expectedBuildArgs = ['--build-arg', 'ARG1=value1', '--build-arg', 'ARG2=value2'];
-    expect(execFileSync).toHaveBeenCalledWith(
-      "docker",
-      expect.arrayContaining(expectedBuildArgs),
-      { stdio: 'inherit', cwd: context.root}
-    );
+    expect(execFileSync).toHaveBeenCalledWith('docker', expect.arrayContaining(expectedBuildArgs), {
+      stdio: 'inherit',
+      cwd: context.root,
+    });
   });
 
   it('should not add build arguments if args are not provided', async () => {
@@ -224,7 +224,7 @@ describe('executor', () => {
     await executor(options, context);
 
     expect(execFileSync).toHaveBeenCalledWith(
-      "docker",
+      'docker',
       expect.not.arrayContaining(['--build-arg']),
       { stdio: 'inherit', cwd: context.root }
     );

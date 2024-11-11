@@ -38,6 +38,11 @@
     "dockerSocket": {
       "type": "string",
       "description": "The docker socket to use for the analysis"
+    },
+    "version": {
+      "type": "string",
+      "description": "The version of dive to use",
+      "default": "latest"
     }
   },
   "required": ["image"]

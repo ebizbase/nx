@@ -1,0 +1,22 @@
+{
+  "name": "@ebizbase/nx-docker",
+  "version": "0.0.0",
+  "private": false,
+  "description": "The nx plugin build, push containers and analyze images from your applications",
+  "bugs": "https://github.com/ebizbase/nx/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ebizbase/nx.git"
+  },
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "typings": "./src/index.d.ts",
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "peerDependencies": {
+    "@nx/devkit": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0"
+  },
+  "executors": "./executors.json",
+  "generators": "./generators.json"
+}

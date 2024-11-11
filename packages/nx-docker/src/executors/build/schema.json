@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "docker build executor schema",
+  "type": "object",
+  "properties": {
+    "ci": {
+      "type": "boolean",
+      "default": false
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The output of the build"
+    },
+    "args": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The arguments to pass to the docker build command"
+    },
+    "file": {
+      "type": "string",
+      "description": "The the dockerfile to use for building the image"
+    },
+    "context": {
+      "type": "string",
+      "description": "The context to use for building the image"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The tag of the image to build"
+    }
+  },
+  "required": ["outputs", "tags"]
+}

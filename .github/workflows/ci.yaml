@@ -89,25 +89,25 @@ jobs:
     if: always()
     steps:
       - run: echo "${{ toJSON(needs) }}"
-      - uses: LouisBrunner/checks-action@v2.0.0
+      - uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
         if: needs.test.result == 'skipped'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: Unit Test Check
           conclusion: success
-      - uses: LouisBrunner/checks-action@v2.0.0
+      - uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
         if: needs.test.result != 'skipped'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: Unit Test Check
           conclusion: ${{needs.test.result}}
-      - uses: LouisBrunner/checks-action@v2.0.0
+      - uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
         if: needs.e2e.result == 'skipped'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: E2E Test Check
           conclusion: success
-      - uses: LouisBrunner/checks-action@v2.0.0
+      - uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
         if: needs.e2e.result != 'skipped'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -123,7 +123,7 @@ jobs:
           done
           echo "report=$OUTPUT" >> $GITHUB_OUTPUT
       - name: Report to PR
-        uses: thollander/actions-comment-pull-request@v3
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
         if: github.event_name == 'pull_request'
         with:
           github-token: ${{ secrets.GH_BOT_TOKEN }}

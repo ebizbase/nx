@@ -1,6 +1,6 @@
 {
   "name": "@ebizbase/nx-docker",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": false,
   "description": "The nx plugin build, push containers and analyze images from your applications",
   "bugs": "https://github.com/ebizbase/nx/issues",

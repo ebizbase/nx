@@ -5,7 +5,7 @@ import { execFileSync } from 'child_process';
 
 import { DockerExecutorSchema } from './schema';
 
-const dockerExecutor: PromiseExecutor<DockerExecutorSchema> = async (options, context) => {
+const executor: PromiseExecutor<DockerExecutorSchema> = async (options, context) => {
   try {
     execFileSync('docker', ['info'], { stdio: context.isVerbose ? 'inherit' : 'ignore' });
   } catch {
@@ -68,4 +68,4 @@ const dockerExecutor: PromiseExecutor<DockerExecutorSchema> = async (options, co
   }
 };
 
-export default dockerExecutor;
+export default executor;

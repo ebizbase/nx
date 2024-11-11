@@ -1,4 +1,4 @@
-import dockerExecutor from './executor';
+import executor from './executor';
 import { logger } from '@nx/devkit';
 import { execFileSync } from 'child_process';
 import { existsSync } from 'fs';
@@ -54,7 +54,7 @@ describe('dockerExecutor', () => {
         throw new Error();
       }
     });
-    const result = await dockerExecutor(options, context);
+    const result = await executor(options, context);
     expect(logger.error).toHaveBeenCalledWith(
       'Docker is not installed or docker daemon is not running'
     );
@@ -62,7 +62,7 @@ describe('dockerExecutor', () => {
   });
 
   it('should return success false if no project name is provided', async () => {
-    const result = await dockerExecutor(options, { ...context, projectName: undefined });
+    const result = await executor(options, { ...context, projectName: undefined });
     expect(logger.error).toHaveBeenCalledWith('No project name provided');
     expect(result).toEqual({ success: false });
   });
@@ -70,7 +70,7 @@ describe('dockerExecutor', () => {
   it('should return success false if Dockerfile does not exist', async () => {
     (existsSync as jest.Mock).mockReturnValueOnce(false);
 
-    const result = await dockerExecutor(options, context);
+    const result = await executor(options, context);
 
     expect(logger.error).toHaveBeenCalledWith(
       'Dockerfile not found at /root/test-project/Dockerfile'
@@ -81,7 +81,7 @@ describe('dockerExecutor', () => {
   it('should return success false if context path does not exist', async () => {
     (existsSync as jest.Mock).mockReturnValueOnce(true).mockReturnValueOnce(false);
 
-    const result = await dockerExecutor(options, context);
+    const result = await executor(options, context);
 
     expect(logger.error).toHaveBeenCalledWith('Context path not found at .');
     expect(result).toEqual({ success: false });
@@ -95,7 +95,7 @@ describe('dockerExecutor', () => {
       }
     });
 
-    await dockerExecutor(options, context);
+    await executor(options, context);
 
     expect(logger.warn).toHaveBeenCalledWith(
       'Docker buildx is not installed so performance may be degraded'
@@ -110,7 +110,7 @@ describe('dockerExecutor', () => {
       }
     });
 
-    const result = await dockerExecutor(options, context);
+    const result = await executor(options, context);
     expect(execFileSync).toHaveBeenLastCalledWith(
       'docker',
       [
@@ -136,7 +136,7 @@ describe('dockerExecutor', () => {
       }
     });
 
-    const result = await dockerExecutor(options, context);
+    const result = await executor(options, context);
 
     expect(logger.fatal).toHaveBeenCalledWith('Failed to build Docker image', expect.any(Error));
     expect(result).toEqual({ success: false });
@@ -145,7 +145,7 @@ describe('dockerExecutor', () => {
   it('should handle multiple tags correctly', async () => {
     (existsSync as jest.Mock).mockReturnValue(true);
     const multiTagOptions = { ...options, tags: ['test:latest', 'test:v1'] };
-    await dockerExecutor(multiTagOptions, context);
+    await executor(multiTagOptions, context);
     expect(execFileSync).toHaveBeenCalledWith(
       'docker',
       [
@@ -168,7 +168,7 @@ describe('dockerExecutor', () => {
   it('should log additional info when verbose mode is on', async () => {
     (existsSync as jest.Mock).mockReturnValue(true);
     const verboseContext = { ...context, isVerbose: true };
-    await dockerExecutor(options, verboseContext);
+    await executor(options, verboseContext);
     expect(execFileSync).toHaveBeenCalledWith(expect.any(String), expect.any(Array), {
       stdio: 'inherit',
       cwd: '/root',

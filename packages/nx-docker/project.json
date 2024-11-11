@@ -14,6 +14,14 @@
         "tsConfig": "packages/nx-docker/tsconfig.lib.json",
         "assets": ["packages/nx-docker/*.md"]
       }
+    },
+    "publish": {
+      "dependsOn": ["nx-docker:build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/packages/nx-docker",
+        "command": "npm publish"
+      }
     }
   }
 }

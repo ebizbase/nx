@@ -47,11 +47,44 @@ const executor: PromiseExecutor<DockerExecutorSchema> = async (options, context)
   }
 
   // Build tag và build arg
-  const tagArgs = options.tags.flatMap((tag) => ['-t', tag]);
+  const outputArgs = options.outputs ? [`--output=${options.outputs.join(',')}`] : [];
+  const cacheFromArgs =
+    options.cacheFrom && options.cacheFrom.length > 0
+      ? [`--cache-from=${options.cacheFrom.join(',')}`]
+      : [];
+  const cacheToArgs =
+    options.cacheFrom && options.cacheFrom.length > 0
+      ? [`--cache-to=${options.cacheFrom.join(',')}`]
+      : [];
+  const tagArgs = options.tags.flatMap((tag) => ['-t', tag]) || [];
   const buildArgs = options.args?.flatMap((arg) => ['--build-arg', arg]) || [];
-
+  const addHostArgs = options.addHost?.flatMap((host) => ['--add-host', host]) || [];
+  const allowArgs = options.allow?.flatMap((allow) => ['--allow', allow]) || [];
+  const annotationArgs =
+    options.annotation?.flatMap((annotation) => ['--annotation', annotation]) || [];
+  const attestArgs = options.attest?.flatMap((attest) => ['--attest', attest]) || [];
+  const shmSizeArgs = options.shmSize ? ['--shm-size', options.shmSize] : [];
+  const uLimitArgs = options.ulimit ? [`--ulimit${options.ulimit}`] : [];
+  const targetArgs = options.target ? ['--target', options.target] : [];
   try {
-    const command = [...buildCommand, ...buildArgs, ...tagArgs, '-f', dockerfilePath, contextPath];
+    const command = [
+      ...buildCommand,
+      ...outputArgs,
+      ...cacheFromArgs,
+      ...cacheToArgs,
+      ...buildArgs,
+      ...addHostArgs,
+      ...allowArgs,
+      ...annotationArgs,
+      ...attestArgs,
+      ...shmSizeArgs,
+      ...uLimitArgs,
+      ...tagArgs,
+      ...targetArgs,
+      '-f',
+      dockerfilePath,
+      contextPath,
+    ];
     logger.info(`${command.join(' ')}\n`);
     execFileSync(command[0], command.slice(1), { stdio: 'inherit', cwd: context.root });
     return { success: true };

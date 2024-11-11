@@ -1,35 +1,35 @@
 {
-  "name": "main-spec",
+  "name": "nx-docker-e2e",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "e2e/main-spec",
+  "sourceRoot": "e2e/nx-docker-e2e",
   "projectType": "application",
   "tags": [],
   "targets": {
     "build": {
       "executor": "@ebizbase/nx-docker:build",
       "options": {
-        "tags": ["main-spec:test"],
+        "tags": ["nx-docker-e2e:test"],
         "outputs": ["image"],
         "args": ["ALPINE_VERSION=3.12"]
       }
     },
     "build-test": {
-      "dependsOn": ["main-spec:build"],
+      "dependsOn": ["nx-docker-e2e:build"],
       "executor": "nx:run-commands",
       "options": {
         "command": "docker run --rm main-spec:test curl --version"
       }
     },
     "analyze-test": {
-      "dependsOn": ["main-spec:build"],
+      "dependsOn": ["nx-docker-e2e:build"],
       "executor": "@ebizbase/nx-docker:analyze",
       "options": {
-        "image": "main-spec:test",
+        "image": "nx-docker-e2e:test",
         "ci": true
       }
     },
     "e2e": {
-      "dependsOn": ["main-spec:build-test", "main-spec:analyze-test"],
+      "dependsOn": ["nx-docker-e2e:build-test", "nx-docker-e2e:analyze-test"],
       "executor": "nx:run-commands",
       "options": {
         "command": "echo Done"

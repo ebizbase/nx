@@ -2,7 +2,7 @@
 ## Feature PR Checklist
 Please check if your PR fulfills the following requirements:
 
-- [] The commit message follows our guidelines: <https://github.com/ebizbase/nx-docker/blob/main/CONTRIBUTING.md#commit>
+- [] The commit message follows our guidelines: <https://github.com/ebizbase/nx/blob/main/CONTRIBUTING.md#commit-message-guidelines>
 - [] Tests for the changes have been added
 - [] Docs have been added / updated
 

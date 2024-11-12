@@ -15,8 +15,8 @@
         "assets": [
           "packages/nx-docker/*.md",
           "packages/nx-docker/.npmrc",
-          "packages/nx-docker/src/*.json",
-          "packages/nx-docker/src/*.d.ts",
+          "packages/nx-docker/src/**/*.json",
+          "packages/nx-docker/src/**/*.d.ts",
           "packages/nx-docker/executors.json",
           "packages/nx-docker/generators.json"
         ]

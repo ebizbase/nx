@@ -84,7 +84,8 @@ jobs:
         run: |
           PROJECT_ROOT=$(pnpm exec nx show project ${{ matrix.project }} --json | jq -r .root)
           COVERAGE_SUMMARY=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total)
-          echo "coverage=$COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
+          COVERAGE_SUMMARY_JSON=$(echo "{}" | jq --argjson summary "$COVERAGE_SUMMARY" '.coverage = $summary')
+          echo "coverage=$COVERAGE_SUMMARY_JSON" >> $GITHUB_OUTPUT
 
       - name: Write test result
         if: always()
@@ -95,7 +96,7 @@ jobs:
           matrix-key: ${{ matrix.project }}
           outputs: |-
             status: ${{ job.status }}
-            coverage: ${{ toJson(steps.coverage.outputs.coverage) }}
+            coverage: ${{ steps.coverage.outputs.coverage }}
 
   e2e:
     name: E2E Test Runner

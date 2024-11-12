@@ -79,7 +79,7 @@
       },
       "description": "Images to consider as cache destinations"
     },
-    "shm-size": {
+    "shmSize": {
       "type": "string",
       "description": "Size of /dev/shm"
     },
@@ -93,6 +93,14 @@
         "type": "string"
       },
       "description": "Ulimit options"
+    },
+    "metadataFile": {
+      "type": "string",
+      "description": "The metadata will be written as a JSON object to the specified file"
+    },
+    "flatforms": {
+      "type": "string",
+      "description": "Set the target platform"
     }
   },
   "required": ["tags"]

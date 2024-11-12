@@ -74,6 +74,21 @@ Bellow is all options of @ebizbase/nx-docker:build
 | `shm-size`   | string   | Size of /dev/shm                                                           |         | No       |
 | `target`     | string   | Set the target build stage to build                                        |         | No       |
 | `ulimit`     | string[] | Ulimit options                                                             |         | No       |
+| `platform`   | string[] | Set the target platform for the build                                      |         | No       |
+| `ulimit`     | string[] | The metadata will be written as a JSON object to the specified file.       |         | No       |
+
+> `shm-size` and `ulimit` are only available using `moby/buildkit:master`
+> as builder image atm:
+>
+> ```yaml
+> - name: Set up Docker Buildx
+>   uses: docker/setup-buildx-action@v1
+>   with:
+>   driver-opts: |
+>     image=moby/buildkit:master
+> ```
+
+To check all possible options please check this [schema.json](./src/executors/build/schema.json) file
 
 ## Analyze image
 

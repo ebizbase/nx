@@ -1,8 +1,8 @@
 import { logger, PromiseExecutor } from '@nx/devkit';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { DockerExecutorSchema } from './schema';
 import { DockerUtils } from '../../utils/docker.utils';
-import { existsSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { ProjectUtils } from '../../utils/project.utils';
 import { execFileSync } from 'child_process';
 
@@ -56,6 +56,19 @@ const executor: PromiseExecutor<DockerExecutorSchema> = async (options, context)
     options.cacheFrom && options.cacheFrom.length > 0
       ? [`--cache-to=${options.cacheFrom.join(',')}`]
       : [];
+  const flatformsArgs =
+    options.flatforms && options.flatforms.length > 0
+      ? [`--platform=${options.flatforms.join(',')}`]
+      : [];
+  const metadataFileArgs = options.metadataFile ? ['--metadata-file', options.metadataFile] : [];
+  if (options.metadataFile && !existsSync(options.metadataFile)) {
+    try {
+      mkdirSync(dirname(options.metadataFile), { recursive: true });
+    } catch (error: unknown) {
+      logger.fatal('Failed to create metadata file', error);
+      return { success: false };
+    }
+  }
   const tagArgs = options.tags.flatMap((tag) => ['-t', tag]) || [];
   const buildArgs = options.args?.flatMap((arg) => ['--build-arg', arg]) || [];
   const addHostArgs = options.addHost?.flatMap((host) => ['--add-host', host]) || [];
@@ -66,12 +79,15 @@ const executor: PromiseExecutor<DockerExecutorSchema> = async (options, context)
   const shmSizeArgs = options.shmSize ? ['--shm-size', options.shmSize] : [];
   const uLimitArgs = options.ulimit ? [`--ulimit${options.ulimit}`] : [];
   const targetArgs = options.target ? ['--target', options.target] : [];
+
   try {
     const command = [
       ...buildCommand,
       ...outputArgs,
       ...cacheFromArgs,
       ...cacheToArgs,
+      ...flatformsArgs,
+      ...metadataFileArgs,
       ...buildArgs,
       ...addHostArgs,
       ...allowArgs,

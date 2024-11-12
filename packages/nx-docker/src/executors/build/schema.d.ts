@@ -14,4 +14,6 @@ export interface DockerExecutorSchema {
   shmSize?: string;
   target?: string;
   ulimit?: string[];
+  metadataFile?: string;
+  flatforms: string[];
 }

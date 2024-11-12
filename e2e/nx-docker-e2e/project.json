@@ -10,14 +10,19 @@
       "options": {
         "tags": ["nx-docker-e2e:test"],
         "outputs": ["type=docker"],
-        "args": ["ALPINE_VERSION=3.12"]
+        "args": ["ALPINE_VERSION=3.12"],
+        "metadataFile": "dist/e2e/nx-docker-e2e/metadata.json"
       }
     },
     "build-test": {
       "dependsOn": ["nx-docker-e2e:build"],
       "executor": "nx:run-commands",
       "options": {
-        "command": "docker run --rm nx-docker-e2e:test curl --version"
+        "commands": [
+          "docker run --rm nx-docker-e2e:test curl --version",
+          "cat dist/e2e/nx-docker-e2e/metadata.json | jq ."
+        ],
+        "parallel": false
       }
     },
     "analyze-test": {

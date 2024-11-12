@@ -11,7 +11,7 @@
       "options": {
         "tags": ["nx-docker-e2e:test"],
         "outputs": ["type=docker"],
-        "args": ["ALPINE_VERSION=3.12"],
+        "args": ["ALPINE_VERSION=3.20"],
         "metadataFile": "dist/e2e/nx-docker-e2e/metadata.json"
       }
     },

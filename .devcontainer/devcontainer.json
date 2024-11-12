@@ -16,7 +16,7 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/nx,type=bind,consistency=cached",
   "workspaceFolder": "/workspaces/nx",
   "overrideCommand": false,
-  "postStartCommand": "pnpm install",
+  "postStartCommand": "pnpm install && docker pull alpine:3.20",
   "customizations": {
     "vscode": {
       "settings": {

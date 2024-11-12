@@ -1,6 +1,7 @@
 {
   "name": "nx-docker-e2e",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "implicitDependencies": ["nx-docker"],
   "sourceRoot": "e2e/nx-docker-e2e",
   "projectType": "application",
   "tags": [],

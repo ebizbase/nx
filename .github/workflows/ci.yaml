@@ -154,7 +154,7 @@ jobs:
         with:
           matrix-step-name: test
       - name: Debug
-        run: echo "${{ steps.coverage.outputs }}"
+        run: echo "${{ toJSON(steps.coverage.outputs) }}"
       # - name: Report to PR
       #   uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
       #   if: github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false

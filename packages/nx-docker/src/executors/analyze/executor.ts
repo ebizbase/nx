@@ -6,7 +6,7 @@ import { DockerUtils } from '../../utils/docker.utils';
 export function getDiveArgs(options: AnalyzeExecutorSchema): string[] {
   const args = [];
 
-  args.push(options.image);
+  // args.push(options.image);
 
   if (options.ci) {
     args.push('--ci');

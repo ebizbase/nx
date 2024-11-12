@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/ebizbase/nx/compare/nx-docker@1.3.0...nx-docker@1.4.0) (2024-11-12)
+
+
+### Features
+
+* **nx-docker:** add option metadataFile and flatforms to build executor ([e7afb3c](https://github.com/ebizbase/nx/commit/e7afb3c4d37885ff75a4b4e3a71f08a20cc0f48f))
+
 ## [1.3.0](https://github.com/ebizbase/nx/compare/nx-docker-v1.2.0...nx-docker@1.3.0) (2024-11-11)
 
 

@@ -30,7 +30,7 @@ Bellow config simple build docker image and load it in local registry. You can s
       "executor": "@ebizbase/nx-docker:build",
       "options": {
         "tags": ["your-app:latest"],
-        "outputs": ["image"]
+        "outputs": ["type=image"]
       }
     }
   }
@@ -46,7 +46,7 @@ If you want to build and push image let referance bellow example
       "executor": "@ebizbase/nx-docker:build",
       "options": {
         "tags": ["docker.io/org/your-app:latest", "ghcr.io/ogr/your-app:latest"],
-        "outputs": ["registry"]
+        "outputs": ["type=registry"]
       }
     }
   }

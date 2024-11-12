@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/ebizbase/nx/compare/nx-docker@1.4.0...nx-docker@1.4.1) (2024-11-12)
+
+
+### Bug Fixes
+
+* **nx-docker:** fix publish archive not contain executors.json and generators.json ([ff13306](https://github.com/ebizbase/nx/commit/ff13306d99878514dc4e81ae2617b8a04653b9ca))
+
 ## [1.4.0](https://github.com/ebizbase/nx/compare/nx-docker@1.3.0...nx-docker@1.4.0) (2024-11-12)
 
 

@@ -121,11 +121,10 @@ jobs:
       - name: Run e2e test
         run: pnpm exec nx run ${{ matrix.project }}:e2e --output-style static
 
-  report:
-    name: report
+  checks:
+    name: Create github checks
     runs-on: ubuntu-latest
     needs: [prepare,test,e2e]
-    # Skip merge group event
     if: always()
     steps:
       - run: echo "${{ toJSON(needs) }}"
@@ -153,9 +152,17 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: E2E Test Check
           conclusion: ${{needs.e2e.result}}
-      - name: Generate list of affected projects report
+
+
+  report:
+    name: Report
+    runs-on: ubuntu-latest
+    needs: [prepare,test,e2e]
+    # Skip merge group event
+    if: always() && github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false && needs.prepare.outputs.test-projects != '[""]'
+    steps:
+      - name: Read unit test results
         id: coverage
-        if: github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false
         uses: cloudposse/github-action-matrix-outputs-read@v1
         with:
           matrix-step-name: test
@@ -163,8 +170,13 @@ jobs:
         run: echo "${{ toJson(steps.coverage.outputs) }}"
       - name: Export data json file
         run: |
-          echo "${{ toJson(steps.coverage.outputs) }}" > $GITHUB_WORKSPACE/unit-test.json
-          echo $(cat $GITHUB_WORKSPACE/unit-test.json)
+          projects=${{ fromJson(steps.prepare.outputs.test-test-projects ) }}
+          for project in $projects; do
+            echo "$project"
+            echo "${{ toJson(steps.coverage.outputs) }}.${project}.result"
+          done
+          # echo "${{ toJson(steps.coverage.outputs) }}" > $GITHUB_WORKSPACE/unit-test.json
+          # echo $(cat $GITHUB_WORKSPACE/unit-test.json)
       # - name: Report to PR
       #   uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
       #   if: github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false

@@ -1,9 +1,6 @@
 {
   "name": "devcontainer",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
-  },
+  "image": "ghcr.io/ebizbase/devcontainer:node",
   "mounts": [
     "source=nx-pnpm,target=/var/lib/pnpm,type=volume",
     "source=nx-dind,target=/var/lib/docker,type=volume",

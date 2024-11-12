@@ -8,65 +8,28 @@ on:
 
 permissions:
   contents: read
-  actions: 'read'
+  actions: read
   checks: write
 
 jobs:
 
-  prepare:
-    name: Prepare list of test projects
+  labeler:
     runs-on: ubuntu-latest
-    outputs:
-      affected: ${{ steps.extractor.outputs.affected }}
-      test-projects: ${{ steps.extractor.outputs.test-projects }}
-      e2e-projects: ${{ steps.extractor.outputs.e2e-projects }}
+    if: github.event_name == 'pull_request_targe'
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Label PR based on size
+        uses: cbrgm/pr-size-labeler-action@main
         with:
-          fetch-depth: 0
-      - name: Setup project
-        uses: ./.github/actions/setup
-        with:
-          dependencies: true
-      - name: Get projects to unit test and e2e test
-        id: extractor
-        run: |
-          event="${{ github.event_name }}"
-          if [ "$event" == "merge_group" ]; then
-            echo "Merge group event"
-            affected=$(pnpm exec nx show projects --json | jq -r '.[]')
-            tests=$(pnpm exec nx show projects --with-target test --json | jq -r '.[]')
-            e2es=$(pnpm exec nx show projects --with-target e2e --json | jq -r '.[]')
-            echo "Affected projects: $affected"
-            echo "Afected projects with test target: $tests"
-            echo "Affected projects with e2e target: $e2es"
-            echo "affected=$(printf '%s\n' "${affected[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
-            echo "test-projects=$(printf '%s\n' "${tests[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
-            echo "e2e-projects=$(printf '%s\n' "${e2es[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
-          else
-            echo "Pull request event"
-            affected=$(pnpm exec nx show projects --affected --head=${{ github.event.pull_request.head.sha }} --base=${{ github.event.pull_request.base.sha }}  --json | jq -r '.[]')
-            tests=$(pnpm exec nx show projects --affected --head=${{ github.event.pull_request.head.sha }} --base=${{ github.event.pull_request.base.sha }} --with-target test --json | jq -r '.[]')
-            e2es=$(pnpm exec nx show projects --affected --head=${{ github.event.pull_request.head.sha }} --base=${{ github.event.pull_request.base.sha }} --with-target e2e --json | jq -r '.[]')
-            echo "Affected projects: $affected"
-            echo "Afected projects with test target: $tests"
-            echo "Affected projects with e2e target: $e2es"
-            echo "affected=$(printf '%s\n' "${affected[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
-            echo "test-projects=$(printf '%s\n' "${tests[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
-            echo "e2e-projects=$(printf '%s\n' "${e2es[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
-          fi
-
-
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_repository: ${{ github.repository }}
+          github_pr_number: ${{ github.event.number }}
+          config_file_path: .github/pr-size.yaml
 
   test:
     name: Unit Test Runner
     runs-on: ubuntu-latest
-    needs: prepare
-    if: ${{ needs.prepare.outputs.test-projects != '[""]' }}
-    strategy:
-      matrix:
-        project: ${{ fromJson(needs.prepare.outputs.test-projects) }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -76,41 +39,20 @@ jobs:
         uses: ./.github/actions/setup # local action
         with:
           dependencies: true
-      - name: Run test
-        run: pnpm exec nx run ${{ matrix.project }}:test --output-style static --coverage --coverageReporters=json-summary
-
-      - name: Get coverate sumary
-        id: coverage
-        run: |
-          PROJECT_ROOT=$(pnpm exec nx show project ${{ matrix.project }} --json | jq -r .root)
-          COVERAGE_STATEMENTS=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total.statements.pct)
-          COVERAGE_FUNCTIONS=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total.functions.pct)
-          COVERAGE_BRANCHES=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total.branches.pct)
-          echo "statements=$COVERAGE_STATEMENTS" >> $GITHUB_OUTPUT
-          echo "functions=$COVERAGE_FUNCTIONS" >> $GITHUB_OUTPUT
-          echo "branches=$COVERAGE_BRANCHES" >> $GITHUB_OUTPUT
-
-      - name: Write test result
-        if: always()
-        uses: cloudposse/github-action-matrix-outputs-write@v1
-        id: out
+      - uses: mansagroup/nrwl-nx-action@v3
         with:
-          matrix-step-name: test
-          matrix-key: ${{ matrix.project }}
-          outputs: |-
-            status: ${{ job.status }}
-            statements: ${{ steps.coverage.outputs.statements }}
-            functions: ${{ steps.coverage.outputs.functions }}
-            branches: ${{ steps.coverage.outputs.branches }}
+          targets: test
+          affected: true
+      - uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
+        if: always()
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Unit Test Check
+          conclusion: ${{  job.status }}
 
   e2e:
     name: E2E Test Runner
     runs-on: ubuntu-latest
-    needs: prepare
-    if: ${{ needs.prepare.outputs.e2e-projects != '[""]' }}
-    strategy:
-      matrix:
-        project: ${{fromJson(needs.prepare.outputs.e2e-projects)}}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -118,78 +60,17 @@ jobs:
         uses: ./.github/actions/setup # local action
         with:
           dependencies: true
-      - name: Run e2e test
-        run: pnpm exec nx run ${{ matrix.project }}:e2e --output-style static
-
-  checks:
-    name: Create github checks
-    runs-on: ubuntu-latest
-    needs: [prepare,test,e2e]
-    if: always()
-    steps:
-      - run: echo "${{ toJSON(needs) }}"
-      - uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
-        if: needs.test.result == 'skipped'
+      - uses: mansagroup/nrwl-nx-action@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: Unit Test Check
-          conclusion: success
+          targets: e2e
+          affected: true
+          parallel: 1
       - uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
-        if: needs.test.result != 'skipped'
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: Unit Test Check
-          conclusion: ${{needs.test.result}}
-      - uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
-        if: needs.e2e.result == 'skipped'
+        if: always()
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: E2E Test Check
-          conclusion: success
-      - uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
-        if: needs.e2e.result != 'skipped'
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: E2E Test Check
-          conclusion: ${{needs.e2e.result}}
-
-
-  report:
-    name: Report
-    runs-on: ubuntu-latest
-    needs: [prepare,test,e2e]
-    # Skip merge group event
-    if: always() && github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false && needs.prepare.outputs.test-projects != '[""]'
-    steps:
-      - name: Read unit test results
-        id: coverage
-        uses: cloudposse/github-action-matrix-outputs-read@v1
-        with:
-          matrix-step-name: test
-      - name: Debug Result
-        run: echo "${{ toJson(steps.coverage.outputs.result) }}"
-      - name: Debug
-        run: echo "${{ needs.prepare.outputs.test-projects}}"
-      - name: Export data json file
-        run: |
-          projects=${{ fromJson(needs.prepare.outputs.test-projects)  }}
-          for project in "${projects[@]}"
-          do
-            echo "$project"
-            echo "${{ steps.coverage.outputs.result.status}}"
-            echo "${{ steps.coverage.outputs.result.statements}}"
-            echo "${{ steps.coverage.outputs.result.functions}}"
-            echo "${{ steps.coverage.outputs.result.branches}}"
-          done
-          # echo "${{ toJson(steps.coverage.outputs) }}" > $GITHUB_WORKSPACE/unit-test.json
-          # echo $(cat $GITHUB_WORKSPACE/unit-test.json)
-      # - name: Report to PR
-      #   uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
-      #   if: github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false
-      #   with:
-      #     github-token: ${{ secrets.GH_BOT_TOKEN }}
-      #     comment-tag: ci-report
-      #     message: ${{ steps.coverage.outputs.result }}
+          conclusion: ${{  job.status }}
 
 
 

@@ -173,8 +173,8 @@ jobs:
       - name: Export data json file
         run: |
           projects=${{ fromJson(needs.prepare.outputs.test-projects)  }}
-          printf '%s\n' "${projects[@]}"
-          for project in $projects; do
+          for project in "${projects[@]}"
+          do
             echo "$project"
             echo "${{ steps.coverage.outputs.result.status}}"
             echo "${{ steps.coverage.outputs.result.statements}}"

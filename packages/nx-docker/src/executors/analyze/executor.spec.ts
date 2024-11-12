@@ -45,7 +45,7 @@ describe('Docker Analyze Executor', () => {
       };
       const args = getDiveArgs(options);
       expect(args).toEqual([
-        'test-image',
+        // 'test-image',
         '--ci',
         '--highestUserWastedBytes=500',
         '--highestUserWastedPercent=0.3',

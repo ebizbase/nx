@@ -27,7 +27,7 @@ export function getDiveArgs(options: AnalyzeExecutorSchema): string[] {
     args.push('--ignore-errors');
   }
 
-  args.push(`--source=${options.source}`);
+  // args.push(`--source=${options.source}`);
 
   return args;
 }

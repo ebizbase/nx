@@ -160,10 +160,10 @@ jobs:
         with:
           matrix-step-name: test
       - name: Debug
-        run: echo "${{ steps.coverage.outputs }}"
+        run: echo "${{ toJson(steps.coverage.outputs) }}"
       - name: Export data json file
         run: |
-          echo "${{ steps.coverage.outputs }}" > $GITHUB_WORKSPACE/unit-test.json
+          echo "${{ toJson(steps.coverage.outputs) }}" > $GITHUB_WORKSPACE/unit-test.json
           echo $(cat $GITHUB_WORKSPACE/unit-test.json)
       # - name: Report to PR
       #   uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3

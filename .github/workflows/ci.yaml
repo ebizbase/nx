@@ -19,17 +19,22 @@ jobs:
     name: Unit Test Runner
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout PR branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
-          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
       - name: Setup Project
         uses: ./.github/actions/setup
         with:
           dependencies: true
+      - name: Add and fetch main branch from original repository
+        run: |
+          git remote add upstream "${{ github.event.pull_request.base.repo.clone_url || github.event.repository.url }}"
+          git fetch upstream main
       - name: Run unit test on PR
         if: github.event_name != 'merge_group'
-        run: pnpm exec nx affected -t test --base=${{ github.event.pull_request.base.sha }} --head=${{ github.event.pull_request.head.sha }} --ci --coverage --coverageReporters=lcov
+        run: pnpm exec nx affected -t test --base=upstream/main --ci --coverage --coverageReporters=lcov
       - name: Run unit test on Merge Queue
         if: github.event_name == 'merge_group'
         run: pnpm exec nx run-many -t test --ci --coverage --coverageReporters=lcov
@@ -45,17 +50,23 @@ jobs:
     name: E2E Test Runner
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+
+      - name: Checkout PR branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
-          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
       - name: Setup Project
         uses: ./.github/actions/setup
         with:
           dependencies: true
+      - name: Add and fetch main branch from original repository
+        run: |
+          git remote add upstream "${{ github.event.pull_request.base.repo.clone_url || github.event.repository.url }}"
+          git fetch upstream main
       - name: Run E2E test on PR
         if: github.event_name != 'merge_group'
-        run: pnpm exec nx affected -t e2e --base=${{ github.event.pull_request.base.sha }} --head=${{ github.event.pull_request.head.sha }}
+        run: pnpm exec nx affected -t e2e --base=upstream/main
       - name: Run E2E test on Merge Queue
         if: github.event_name == 'merge_group'
         run: pnpm exec nx run-many -t e2e

@@ -173,7 +173,7 @@ jobs:
           projects=${{ fromJson(steps.prepare.outputs.test-test-projects ) }}
           for project in $projects; do
             echo "$project"
-            echo "$(echo '${{ toJson(steps.coverage.outputs) }}' | jq -r --arg project "$project" '.[$project].status')"
+            echo "$(echo '${{ steps.coverage.outputs }}' | jq -r --arg project "$project" '.[$project].status')"
           done
           # echo "${{ toJson(steps.coverage.outputs) }}" > $GITHUB_WORKSPACE/unit-test.json
           # echo $(cat $GITHUB_WORKSPACE/unit-test.json)

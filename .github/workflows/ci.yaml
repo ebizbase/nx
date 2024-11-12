@@ -77,7 +77,7 @@ jobs:
         with:
           dependencies: true
       - name: Run test
-        run: pnpm exec nx run ${{ matrix.project }}:test --output-style static --ci --coverage --coverageReporters=json-summary
+        run: pnpm exec nx run ${{ matrix.project }}:test --output-style static --coverage --coverageReporters=json-summary
 
       - name: Get coverate sumary
         id: coverage
@@ -93,9 +93,7 @@ jobs:
         with:
           matrix-step-name: test
           matrix-key: ${{ matrix.project }}
-          outputs: |-
-            result=${{ job.status }}
-            coverage=${{ toJson(steps.coverage.outputs.coverage) }}
+          outputs: ${{ toJson(steps.coverage.outputs.coverage) }}
 
   e2e:
     name: E2E Test Runner

@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: 'read'
   checks: write
 
 jobs:
@@ -28,9 +29,6 @@ jobs:
         uses: ./.github/actions/setup
         with:
           dependencies: true
-      - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        if: github.event_name == 'pull_request_target'
-        uses: nrwl/nx-set-shas@e2e6dc8bce4b0387a05eb687735c39c41580b792 # v4
       - name: Get projects to unit test and e2e test
         id: extractor
         run: |
@@ -48,9 +46,9 @@ jobs:
             echo "e2e-projects=$(printf '%s\n' "${e2es[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
           else
             echo "Pull request event"
-            affected=$(pnpm exec nx show projects --affected --json | jq -r '.[]')
-            tests=$(pnpm exec nx show projects --affected --with-target test --json | jq -r '.[]')
-            e2es=$(pnpm exec nx show projects --affected --with-target e2e --json | jq -r '.[]')
+            affected=$(pnpm exec nx show projects --affected --head=${{ github.event.pull_request.head.sha }} --base=${{ github.event.pull_request.base.sha }}  --json | jq -r '.[]')
+            tests=$(pnpm exec nx show projects --affected --head=${{ github.event.pull_request.head.sha }} --base=${{ github.event.pull_request.base.sha }} --with-target test --json | jq -r '.[]')
+            e2es=$(pnpm exec nx show projects --affected --head=${{ github.event.pull_request.head.sha }} --base=${{ github.event.pull_request.base.sha }} --with-target e2e --json | jq -r '.[]')
             echo "Affected projects: $affected"
             echo "Afected projects with test target: $tests"
             echo "Affected projects with e2e target: $e2es"
@@ -79,8 +77,31 @@ jobs:
         with:
           dependencies: true
       - name: Run test
-        run: pnpm exec nx run ${{ matrix.project }}:test --output-style static
+        run: pnpm exec nx run ${{ matrix.project }}:test --output-style static --coverage --coverageReporters=json-summary
 
+      - name: Get coverate sumary
+        id: coverage
+        run: |
+          PROJECT_ROOT=$(pnpm exec nx show project ${{ matrix.project }} --json | jq -r .root)
+          COVERAGE_STATEMENTS=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total.statements.pct)
+          COVERAGE_FUNCTIONS=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total.functions.pct)
+          COVERAGE_BRANCHES=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total.branches.pct)
+          echo "statements=$COVERAGE_STATEMENTS" >> $GITHUB_OUTPUT
+          echo "functions=$COVERAGE_FUNCTIONS" >> $GITHUB_OUTPUT
+          echo "branches=$COVERAGE_BRANCHES" >> $GITHUB_OUTPUT
+
+      - name: Write test result
+        if: always()
+        uses: cloudposse/github-action-matrix-outputs-write@v1
+        id: out
+        with:
+          matrix-step-name: test
+          matrix-key: ${{ matrix.project }}
+          outputs: |-
+            status: ${{ job.status }}
+            statements: ${{ steps.coverage.outputs.statements }}
+            functions: ${{ steps.coverage.outputs.functions }}
+            branches: ${{ steps.coverage.outputs.branches }}
 
   e2e:
     name: E2E Test Runner
@@ -100,11 +121,10 @@ jobs:
       - name: Run e2e test
         run: pnpm exec nx run ${{ matrix.project }}:e2e --output-style static
 
-  report:
-    name: report
+  checks:
+    name: Create github checks
     runs-on: ubuntu-latest
     needs: [prepare,test,e2e]
-    # Skip merge group event
     if: always()
     steps:
       - run: echo "${{ toJSON(needs) }}"
@@ -132,25 +152,38 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: E2E Test Check
           conclusion: ${{needs.e2e.result}}
-      - name: Generate list of affected projects report
-        id: affected-project-report
-        if: github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false
-        run: |
-          OUTPUT='## CI Report\n\n'
-          OUTPUT+="### Affected projects\n"
-          projects=$(echo "${{ needs.prepare.outputs.affected }}" | jq -r '.[]')
-          for project in $projects; do
-            OUTPUT+="- $project\n"
-          done
-          echo "report=$OUTPUT" >> $GITHUB_OUTPUT
-      - name: Report to PR
-        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
-        if: github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false
+
+
+  report:
+    name: Report
+    runs-on: ubuntu-latest
+    needs: [prepare,test,e2e]
+    # Skip merge group event
+    if: always() && github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false && needs.prepare.outputs.test-projects != '[""]'
+    steps:
+      - name: Read unit test results
+        id: coverage
+        uses: cloudposse/github-action-matrix-outputs-read@v1
         with:
-          github-token: ${{ secrets.GH_BOT_TOKEN }}
-          comment-tag: ci-report
-          message: |
-            ${{ steps.affected-project-report.outputs.report }}
+          matrix-step-name: test
+      - name: Debug
+        run: echo "${{ toJson(steps.coverage.outputs) }}"
+      - name: Export data json file
+        run: |
+          projects=${{ fromJson(steps.prepare.outputs.test-test-projects ) }}
+          for project in $projects; do
+            echo "$project"
+            echo "$(echo '${{ steps.coverage.outputs }}' | jq -r --arg project "$project" '.[$project].status')"
+          done
+          # echo "${{ toJson(steps.coverage.outputs) }}" > $GITHUB_WORKSPACE/unit-test.json
+          # echo $(cat $GITHUB_WORKSPACE/unit-test.json)
+      # - name: Report to PR
+      #   uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
+      #   if: github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false
+      #   with:
+      #     github-token: ${{ secrets.GH_BOT_TOKEN }}
+      #     comment-tag: ci-report
+      #     message: ${{ steps.coverage.outputs.result }}
 
 
 

@@ -9,7 +9,7 @@
   "semanticCommitScope": "deps",
   "semanticCommitType": "chore",
   "dependencyDashboard": true,
-  "branchPrefix": "chore/renovate/",
+  "branchPrefix": "renovate/",
   "dependencyDashboardAutoclose": true,
   "commitBodyTable": true,
   "schedule": ["before 1am"],

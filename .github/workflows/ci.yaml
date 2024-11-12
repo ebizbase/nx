@@ -170,7 +170,7 @@ jobs:
         run: echo "${{ toJson(steps.coverage.outputs) }}"
       - name: Export data json file
         run: |
-          projects=${{ fromJson(steps.prepare.outputs.test-test-projects ) }}
+          projects=${{ fromJson(steps.prepare.outputs.test-projects ) }}
           for project in $projects; do
             echo "$project"
             echo "$(echo '${{ steps.coverage.outputs }}' | jq -r --arg project "$project" '.[$project].status')"

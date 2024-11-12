@@ -12,7 +12,12 @@
         "outputPath": "dist/packages/nx-docker",
         "main": "packages/nx-docker/index.ts",
         "tsConfig": "packages/nx-docker/tsconfig.lib.json",
-        "assets": ["packages/nx-docker/*.md", "packages/nx-docker/.npmrc"]
+        "assets": [
+          "packages/nx-docker/*.md",
+          "packages/nx-docker/.npmrc",
+          "packages/nx-docker/executors.json",
+          "packages/nx-docker/generators.json"
+        ]
       }
     },
     "publish": {

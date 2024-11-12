@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/ebizbase/nx/compare/nx-docker@1.4.1...nx-docker@1.4.2) (2024-11-12)
+
+
+### Bug Fixes
+
+* **nx-docker:** fix publish archive not container schema json files ([0b60b65](https://github.com/ebizbase/nx/commit/0b60b6560c8daf12695ebf6298a44b8b5d4d785d))
+
 ## [1.4.1](https://github.com/ebizbase/nx/compare/nx-docker@1.4.0...nx-docker@1.4.1) (2024-11-12)
 
 

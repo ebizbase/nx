@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: 'read'
   checks: write
 
 jobs:
@@ -28,9 +29,6 @@ jobs:
         uses: ./.github/actions/setup
         with:
           dependencies: true
-      - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        if: github.event_name == 'pull_request_target'
-        uses: nrwl/nx-set-shas@e2e6dc8bce4b0387a05eb687735c39c41580b792 # v4
       - name: Get projects to unit test and e2e test
         id: extractor
         run: |
@@ -48,9 +46,9 @@ jobs:
             echo "e2e-projects=$(printf '%s\n' "${e2es[@]}" | jq -R . | jq -s . | jq -c .)" >> $GITHUB_OUTPUT
           else
             echo "Pull request event"
-            affected=$(pnpm exec nx show projects --affected --json | jq -r '.[]')
-            tests=$(pnpm exec nx show projects --affected --with-target test --json | jq -r '.[]')
-            e2es=$(pnpm exec nx show projects --affected --with-target e2e --json | jq -r '.[]')
+            affected=$(pnpm exec nx show projects --affected --head=${{ github.event.pull_request.head.sha }} --base=${{ github.event.pull_request.base.sha }}  --json | jq -r '.[]')
+            tests=$(pnpm exec nx show projects --affected --head=${{ github.event.pull_request.head.sha }} --base=${{ github.event.pull_request.base.sha }} --with-target test --json | jq -r '.[]')
+            e2es=$(pnpm exec nx show projects --affected --head=${{ github.event.pull_request.head.sha }} --base=${{ github.event.pull_request.base.sha }} --with-target e2e --json | jq -r '.[]')
             echo "Affected projects: $affected"
             echo "Afected projects with test target: $tests"
             echo "Affected projects with e2e target: $e2es"
@@ -79,8 +77,26 @@ jobs:
         with:
           dependencies: true
       - name: Run test
-        run: pnpm exec nx run ${{ matrix.project }}:test --output-style static
+        run: pnpm exec nx run ${{ matrix.project }}:test --output-style static --coverage --coverageReporters=json-summary
 
+      - name: Get coverate sumary
+        id: coverage
+        run: |
+          PROJECT_ROOT=$(pnpm exec nx show project ${{ matrix.project }} --json | jq -r .root)
+          COVERAGE_SUMMARY=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total)
+          COVERAGE_SUMMARY_JSON=$(echo "{}" | jq --argjson summary "$COVERAGE_SUMMARY" '.coverage = $summary')
+          echo "coverage=$COVERAGE_SUMMARY_JSON" >> $GITHUB_OUTPUT
+
+      - name: Write test result
+        if: always()
+        uses: cloudposse/github-action-matrix-outputs-write@v1
+        id: out
+        with:
+          matrix-step-name: test
+          matrix-key: ${{ matrix.project }}
+          outputs: |-
+            status: ${{ job.status }}
+            coverage: ${{ steps.coverage.outputs.coverage }}
 
   e2e:
     name: E2E Test Runner
@@ -133,24 +149,20 @@ jobs:
           name: E2E Test Check
           conclusion: ${{needs.e2e.result}}
       - name: Generate list of affected projects report
-        id: affected-project-report
+        id: coverage
         if: github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false
-        run: |
-          OUTPUT='## CI Report\n\n'
-          OUTPUT+="### Affected projects\n"
-          projects=$(echo "${{ needs.prepare.outputs.affected }}" | jq -r '.[]')
-          for project in $projects; do
-            OUTPUT+="- $project\n"
-          done
-          echo "report=$OUTPUT" >> $GITHUB_OUTPUT
-      - name: Report to PR
-        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
-        if: github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false
+        uses: cloudposse/github-action-matrix-outputs-read@v1
         with:
-          github-token: ${{ secrets.GH_BOT_TOKEN }}
-          comment-tag: ci-report
-          message: |
-            ${{ steps.affected-project-report.outputs.report }}
+          matrix-step-name: test
+      - name: Debug
+        run: echo "${{ toJSON(steps.coverage.outputs) }}"
+      # - name: Report to PR
+      #   uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3
+      #   if: github.event_name == 'pull_request_target' && startsWith(github.head_ref, 'release-please-')==false
+      #   with:
+      #     github-token: ${{ secrets.GH_BOT_TOKEN }}
+      #     comment-tag: ci-report
+      #     message: ${{ steps.coverage.outputs.result }}
 
 
 

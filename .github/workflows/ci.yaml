@@ -32,7 +32,7 @@ jobs:
         run: pnpm exec nx affected -t test --base=${{ github.event.pull_request.base.sha }} --head=${{ github.event.pull_request.head.sha }} --ci --coverage --coverageReporters=lcov
       - name: Run unit test on Merge Queue
         if: github.event_name == 'merge_group'
-        run: pnpm exec nx -t test --ci --coverage --coverageReporters=lcov
+        run: pnpm exec nx run-many -t test --ci --coverage --coverageReporters=lcov
       - name: Create github check
         uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
         if: always()
@@ -58,7 +58,7 @@ jobs:
         run: pnpm exec nx affected -t e2e --base=${{ github.event.pull_request.base.sha }} --head=${{ github.event.pull_request.head.sha }}
       - name: Run E2E test on Merge Queue
         if: github.event_name == 'merge_group'
-        run: pnpm exec nx -t e2e
+        run: pnpm exec nx run-many -t e2e
       - name: Create github check
         uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
         if: always()

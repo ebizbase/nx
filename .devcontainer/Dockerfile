@@ -1,6 +1,6 @@
 # trunk-ignore-all(trivy/DS002)
 # trunk-ignore-all(checkov/CKV_DOCKER_3)
-FROM debian:bookworm-slim@sha256:36e591f228bb9b99348f584e83f16e012c33ba5cad44ef5981a1d7c0a93eca22
+FROM debian:bookworm-slim@sha256:ca3372ce30b03a591ec573ea975ad8b0ecaf0eb17a354416741f8001bbcae33d
 
 ENV SHELL=/bin/zsh
 ENV NX_DAEMON=true

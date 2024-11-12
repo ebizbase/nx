@@ -15,7 +15,7 @@ jobs:
 
   labeler:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_targe'
+    if: startsWith(github.event_name, 'pull_request_targe')
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -39,12 +39,14 @@ jobs:
         uses: ./.github/actions/setup
         with:
           dependencies: true
-      - uses: mansagroup/nrwl-nx-action@v3
+      - name: Run nx test target
+        uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: test
           affected: true
           args: --ci --coverage --coverageReporters=lcov
-      - uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
+      - name: Create github check
+        uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
         if: always()
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -63,12 +65,14 @@ jobs:
         uses: ./.github/actions/setup
         with:
           dependencies: true
-      - uses: mansagroup/nrwl-nx-action@v3
+      - name: Run nx e2e target
+        uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: e2e
           affected: true
           parallel: 1
-      - uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
+      - name: Create github check
+        uses: LouisBrunner/checks-action@6b626ffbad7cc56fd58627f774b9067e6118af23 # v2.0.0
         if: always()
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

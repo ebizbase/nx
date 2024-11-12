@@ -83,9 +83,12 @@ jobs:
         id: coverage
         run: |
           PROJECT_ROOT=$(pnpm exec nx show project ${{ matrix.project }} --json | jq -r .root)
-          COVERAGE_SUMMARY=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total)
-          COVERAGE_SUMMARY_JSON=$(echo "{}" | jq --argjson summary "$COVERAGE_SUMMARY" '.coverage = $summary')
-          echo "coverage=$COVERAGE_SUMMARY_JSON" >> $GITHUB_OUTPUT
+          COVERAGE_STATEMENTS=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total.statements.pct)
+          COVERAGE_FUNCTIONS=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total.functions.pct)
+          COVERAGE_BRANCHES=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total.branches.pct)
+          echo "statements=$COVERAGE_STATEMENTS" >> $GITHUB_OUTPUT
+          echo "functions=$COVERAGE_FUNCTIONS" >> $GITHUB_OUTPUT
+          echo "branches=$COVERAGE_BRANCHES" >> $GITHUB_OUTPUT
 
       - name: Write test result
         if: always()
@@ -96,7 +99,9 @@ jobs:
           matrix-key: ${{ matrix.project }}
           outputs: |-
             status: ${{ job.status }}
-            coverage: ${{ steps.coverage.outputs.coverage }}
+            statements: ${{ steps.coverage.outputs.statements }}
+            functions: ${{ steps.coverage.outputs.functions }}
+            branches: ${{ steps.coverage.outputs.branches }}
 
   e2e:
     name: E2E Test Runner

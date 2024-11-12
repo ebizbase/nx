@@ -9,7 +9,7 @@
       "executor": "@ebizbase/nx-docker:build",
       "options": {
         "tags": ["nx-docker-e2e:test"],
-        "outputs": ["image"],
+        "outputs": ["type=docker"],
         "args": ["ALPINE_VERSION=3.12"]
       }
     },
@@ -17,7 +17,7 @@
       "dependsOn": ["nx-docker-e2e:build"],
       "executor": "nx:run-commands",
       "options": {
-        "command": "docker run --rm main-spec:test curl --version"
+        "command": "docker run --rm nx-docker-e2e:test curl --version"
       }
     },
     "analyze-test": {

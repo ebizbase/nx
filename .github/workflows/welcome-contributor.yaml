@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Greet the contributor
-        uses: garg3133/welcome-new-contributors@v1.2
+        uses: garg3133/welcome-new-contributors@a38583ed8282e23d63d7bf919ca2d9fb95300ca6 # v1.2
         with:
           token: ${{ secrets.GH_BOT_TOKEN }}
           issue-message: Hello @contributor_name, thanks for opening your first issue. We welcome you to the community!

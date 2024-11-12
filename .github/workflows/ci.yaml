@@ -166,14 +166,20 @@ jobs:
         uses: cloudposse/github-action-matrix-outputs-read@v1
         with:
           matrix-step-name: test
+      - name: Debug Result
+        run: echo "${{ toJson(steps.coverage.outputs.result) }}"
       - name: Debug
-        run: echo "${{ toJson(steps.coverage.outputs) }}"
+        run: echo "${{ needs.prepare.outputs.test-projects}}"
       - name: Export data json file
         run: |
           projects=${{ fromJson(needs.prepare.outputs.test-projects)  }}
+          printf '%s\n' "${projects[@]}"
           for project in $projects; do
             echo "$project"
-            echo "${{ toJson(steps.coverage.outputs.result) }}"
+            echo "${{ steps.coverage.outputs.result.status}}"
+            echo "${{ steps.coverage.outputs.result.statements}}"
+            echo "${{ steps.coverage.outputs.result.functions}}"
+            echo "${{ steps.coverage.outputs.result.branches}}"
           done
           # echo "${{ toJson(steps.coverage.outputs) }}" > $GITHUB_WORKSPACE/unit-test.json
           # echo $(cat $GITHUB_WORKSPACE/unit-test.json)

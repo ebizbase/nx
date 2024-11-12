@@ -51,6 +51,7 @@ describe('executor', () => {
     args: ['ARG1=value1'],
     ci: false,
     outputs: ['image'],
+    flatforms: [],
   };
   let dockerUtils: jest.Mocked<DockerUtils>;
   let projectUtils: jest.Mocked<ProjectUtils>;

@@ -82,7 +82,7 @@ jobs:
       - name: Get coverate sumary
         id: coverage
         run: |
-          PROJECT_ROOT=$(nx show project ${{ matrix.project }} --json | jq -r .root)
+          PROJECT_ROOT=$(pnpm exec nx show project ${{ matrix.project }} --json | jq -r .root)
           COVERAGE_SUMMARY=$(cat .coverage/$PROJECT_ROOT/coverage-summary.json | jq -r .total)
           echo "coverage=$COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
 
@@ -94,7 +94,7 @@ jobs:
           matrix-step-name: test
           matrix-key: ${{ matrix.project }}
           outputs: |-
-            result: ${{ job.status }}
+            status: ${{ job.status }}
             coverage: ${{ toJson(steps.coverage.outputs.coverage) }}
 
   e2e:

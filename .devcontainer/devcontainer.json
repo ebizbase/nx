@@ -1,6 +1,6 @@
 {
   "name": "devcontainer",
-  "image": "ghcr.io/ebizbase/devcontainer:node",
+  "image": "ghcr.io/ebizbase/devcontainer:node@sha256:95f42f12de8d7fed0b0e710b0b9b0b4d3449d931c64a388f00b416a8a47ecdd3",
   "mounts": [
     "source=nx-pnpm,target=/var/lib/pnpm,type=volume",
     "source=nx-dind,target=/var/lib/docker,type=volume",
